@@ -16,6 +16,7 @@ import {
   loadClientContacts,
   loadClientAccounts,
   loadClientSoftwareStacks,
+  loadClientHistory,
   loadEmployeeLearningPaths,
   loadEmployeeCourses,
   loadEmployeeCareerPaths,
@@ -70,10 +71,10 @@ export const getBootstrapFn = createServerFn({ method: "GET" }).handler(async ()
     if (user && !canViewSensitiveClientData(user)) {
       visibleClients = visibleClients.map((c) => ({
         ...c,
-        billingNotes: undefined,
-        paymentTerms: undefined,
-        commercialNotes: undefined,
-        contractCopyLink: undefined,
+        billingNotes: null,
+        paymentTerms: null,
+        commercialNotes: null,
+        contractCopyLink: null,
       }));
     }
 
@@ -186,13 +187,14 @@ export const getClientDetailsFn = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { clientId } = data;
     try {
-      const [contacts, accounts, softwareStacks] = await Promise.all([
+      const [contacts, accounts, softwareStacks, history] = await Promise.all([
         loadClientContacts(clientId).catch(() => []),
         loadClientAccounts(clientId).catch(() => []),
         loadClientSoftwareStacks(clientId).catch(() => []),
+        loadClientHistory(clientId).catch(() => []),
       ]);
-      return { contacts, accounts, softwareStacks };
+      return { contacts, accounts, softwareStacks, history };
     } catch {
-      return { contacts: [], accounts: [], softwareStacks: [] };
+      return { contacts: [], accounts: [], softwareStacks: [] as any[], history: [] as any[] };
     }
   });

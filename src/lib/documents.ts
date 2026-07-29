@@ -14,11 +14,7 @@ export type DocumentCategory = "Contracts" | "MOMs" | "Invoices" | "Reports";
 export type ClientStatus = "Active" | "On Hold" | "Non Active";
 export type ClientSupportLevel = "Level 1 - Priority Client" | "Level 2 - Standard Client";
 export type ClientRecordStatus =
-  | "Draft"
-  | "Under Review"
-  | "Approved"
-  | "Rejected"
-  | "Sent Back for Correction";
+  "Draft" | "Under Review" | "Approved" | "Rejected" | "Sent Back for Correction";
 
 export type ClientContact = {
   id: string;
@@ -169,13 +165,25 @@ export type ClientChangeRequest = {
   reviewedAt: string | null;
 };
 
+export type ClientHistoryEntry = {
+  id: string;
+  clientId: string;
+  action: string;
+  previousValue: string | null;
+  newValue: string | null;
+  remarks: string | null;
+  changedBy: string;
+  changedAt: string;
+};
+
 // ---------------------------------------------------------------------------
 // Employee Module sub-entity types
 // ---------------------------------------------------------------------------
 
 export type LearningPathStatus = "Not Started" | "In Progress" | "Completed" | "On Hold";
 export type CourseStatus = "Not Started" | "In Progress" | "Completed";
-export type LearningCategory = "Software Learning" | "Soft Skills Learning" | "Technical Skills Learning";
+export type LearningCategory =
+  "Software Learning" | "Soft Skills Learning" | "Technical Skills Learning";
 export type AssessmentStatus = "Pending" | "Completed" | "Passed" | "Not Passed";
 export type PromotionReadiness = "Not Ready" | "In Progress" | "Ready";
 export type GoalStatus = "Not Started" | "In Progress" | "Achieved" | "Delayed";
@@ -521,26 +529,82 @@ export const revenueBands = [
   "$10M – $50M",
   "$50M+",
 ];
-export const employeeSizeBands = [
-  "1–10",
-  "11–50",
-  "51–200",
-  "201–500",
-  "501–1000",
-  "1000+",
-];
+export const employeeSizeBands = ["1–10", "11–50", "51–200", "201–500", "501–1000", "1000+"];
 export const softwareCategories = [
-  { name: "Accounting Software", multiSelect: false, options: ["Xero", "QBO", "Business Central", "MYOB", "Other"] },
-  { name: "Inventory Software", multiSelect: false, options: ["Cin7 Core", "Business Central", "Other", "NA"] },
-  { name: "Payroll Software", multiSelect: false, options: ["Xero", "QBO", "Employment Hero", "Gusto", "Rippling", "ADP", "KeyPay", "Other", "NA"] },
-  { name: "Reporting Software", multiSelect: false, options: ["Fathom", "Syft", "Power BI", "Other", "NA"] },
+  {
+    name: "Accounting Software",
+    multiSelect: false,
+    options: ["Xero", "QBO", "Business Central", "MYOB", "Other"],
+  },
+  {
+    name: "Inventory Software",
+    multiSelect: false,
+    options: ["Cin7 Core", "Business Central", "Other", "NA"],
+  },
+  {
+    name: "Payroll Software",
+    multiSelect: false,
+    options: [
+      "Xero",
+      "QBO",
+      "Employment Hero",
+      "Gusto",
+      "Rippling",
+      "ADP",
+      "KeyPay",
+      "Other",
+      "NA",
+    ],
+  },
+  {
+    name: "Reporting Software",
+    multiSelect: false,
+    options: ["Fathom", "Syft", "Power BI", "Other", "NA"],
+  },
   { name: "AP Automation Software", multiSelect: false, options: ["Dext", "Other", "NA"] },
-  { name: "Order Management Software", multiSelect: true, options: ["Shopify", "Amazon", "WooCommerce", "BigCommerce", "Magento", "eBay", "Walmart", "Faire", "Other", "NA"] },
+  {
+    name: "Order Management Software",
+    multiSelect: true,
+    options: [
+      "Shopify",
+      "Amazon",
+      "WooCommerce",
+      "BigCommerce",
+      "Magento",
+      "eBay",
+      "Walmart",
+      "Faire",
+      "Other",
+      "NA",
+    ],
+  },
   { name: "CRM", multiSelect: false, options: ["PipeDrive", "HubSpot", "Other", "NA"] },
-  { name: "Retail / POS", multiSelect: false, options: ["Shopify", "Square", "Lightspeed", "Cin7 POS", "Vend", "Other", "NA"] },
+  {
+    name: "Retail / POS",
+    multiSelect: false,
+    options: ["Shopify", "Square", "Lightspeed", "Cin7 POS", "Vend", "Other", "NA"],
+  },
   { name: "Automation Tools", multiSelect: false, options: ["n8n", "Zapier", "Other", "NA"] },
-  { name: "Banking and Payments", multiSelect: true, options: ["PayPal", "Stripe", "Airwallex", "Wise", "Square", "Authorize.net", "Other", "NA"] },
-  { name: "Warehouse and Shipping", multiSelect: true, options: ["ShipStation", "ShipBob", "Shippit", "Starshipit", "EasyPost", "CartonCloud", "Amazon", "Other", "NA"] },
+  {
+    name: "Banking and Payments",
+    multiSelect: true,
+    options: ["PayPal", "Stripe", "Airwallex", "Wise", "Square", "Authorize.net", "Other", "NA"],
+  },
+  {
+    name: "Warehouse and Shipping",
+    multiSelect: true,
+    options: [
+      "ShipStation",
+      "ShipBob",
+      "Shippit",
+      "Starshipit",
+      "EasyPost",
+      "CartonCloud",
+      "Amazon",
+      "Other",
+      "NA",
+    ],
+  },
 ];
 
 export const officialWorkLocations = [
@@ -613,9 +677,7 @@ export function nextClientCode(existingCodes: (string | null)[]): string {
 }
 
 export function clientsPendingApproval(clients: ClientRecord[]): ClientRecord[] {
-  return clients.filter(
-    (c) => c.recordStatus === "Under Review" || c.recordStatus === "Sent Back for Correction",
-  );
+  return clients.filter((c) => c.recordStatus === "Under Review");
 }
 
 export function documentsForClient(

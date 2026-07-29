@@ -28,6 +28,7 @@ import type {
   employeeDocuments,
   employeeProjectHistory,
   employeeCompensationHistory,
+  clientHistory,
 } from "../db/schema";
 import type { Person } from "../lib/hierarchy";
 import type { Task, LeaveRequest } from "../lib/workspace";
@@ -56,6 +57,7 @@ import type {
   EmployeeHrDocument,
   EmployeeProjectHistory,
   EmployeeCompensationHistory,
+  ClientHistoryEntry,
 } from "../lib/documents";
 
 type PersonRow = typeof people.$inferSelect;
@@ -68,6 +70,8 @@ type ClientAccountRow = typeof clientAccounts.$inferSelect;
 type ClientSoftwareStackRow = typeof clientSoftwareStacks.$inferSelect;
 type ClientChangeRequestRow = typeof clientChangeRequests.$inferSelect;
 type EmployeeHistoryRow = typeof employeeHistory.$inferSelect;
+type ClientHistoryRow = typeof clientHistory.$inferSelect;
+
 type ImportJobRow = typeof importJobs.$inferSelect;
 type ExportJobRow = typeof exportJobs.$inferSelect;
 type EmployeeLearningPathRow = typeof employeeLearningPaths.$inferSelect;
@@ -87,7 +91,11 @@ type EmployeeCompensationHistoryRow = typeof employeeCompensationHistory.$inferS
 
 function parseJsonArray(raw: string | null): string[] {
   if (!raw) return [];
-  try { return JSON.parse(raw) as string[]; } catch { return []; }
+  try {
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
 }
 
 export function toPerson(
@@ -301,6 +309,19 @@ export function toClientSoftwareStack(row: ClientSoftwareStackRow): ClientSoftwa
   };
 }
 
+export function toClientHistory(row: ClientHistoryRow): ClientHistoryEntry {
+  return {
+    id: row.id,
+    clientId: row.clientId,
+    action: row.action,
+    previousValue: row.previousValue ?? null,
+    newValue: row.newValue ?? null,
+    remarks: row.remarks ?? null,
+    changedBy: row.changedBy,
+    changedAt: row.changedAt.toISOString(),
+  };
+}
+
 export function toClientChangeRequest(row: ClientChangeRequestRow): ClientChangeRequest {
   return {
     id: row.id,
@@ -334,7 +355,11 @@ export function toEmployeeHistory(row: EmployeeHistoryRow): EmployeeHistoryEntry
 export function toImportJob(row: ImportJobRow): ImportJob {
   let errors: ImportRowError[] = [];
   if (row.errorLog) {
-    try { errors = JSON.parse(row.errorLog); } catch { errors = []; }
+    try {
+      errors = JSON.parse(row.errorLog);
+    } catch {
+      errors = [];
+    }
   }
   return {
     id: row.id,
@@ -379,7 +404,8 @@ export function toDocument(row: DocumentRow): DocumentRecord {
 
 export function toEmployeeLearningPath(row: EmployeeLearningPathRow): EmployeeLearningPath {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     assignedLearningPath: row.assignedLearningPath,
     learningPathAssignedDate: row.learningPathAssignedDate,
     learningPathStatus: row.learningPathStatus,
@@ -392,7 +418,8 @@ export function toEmployeeLearningPath(row: EmployeeLearningPathRow): EmployeeLe
 
 export function toEmployeeCourse(row: EmployeeCourseRow): EmployeeCourse {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     learningCategory: row.learningCategory,
     courseName: row.courseName,
     courseStatus: row.courseStatus,
@@ -406,7 +433,8 @@ export function toEmployeeCourse(row: EmployeeCourseRow): EmployeeCourse {
 
 export function toEmployeeCareerPath(row: EmployeeCareerPathRow): EmployeeCareerPath {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     currentCareerPathLevel: row.currentCareerPathLevel,
     nextTargetCareerLevel: row.nextTargetCareerLevel,
     targetTimeline: row.targetTimeline,
@@ -422,7 +450,8 @@ export function toEmployeeCareerPath(row: EmployeeCareerPathRow): EmployeeCareer
 
 export function toEmployeeKraGoal(row: EmployeeKraGoalRow): EmployeeKraGoal {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     reviewPeriod: row.reviewPeriod,
     goalTitle: row.goalTitle,
     goalDescription: row.goalDescription,
@@ -440,7 +469,8 @@ export function toEmployeeKraGoal(row: EmployeeKraGoalRow): EmployeeKraGoal {
 
 export function toEmployeeAppraisal(row: EmployeeAppraisalRow): EmployeeAppraisal {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     appraisalYear: row.appraisalYear,
     appraisalRating: row.appraisalRating,
     appraisalSummary: row.appraisalSummary,
@@ -456,7 +486,8 @@ export function toEmployeeAppraisal(row: EmployeeAppraisalRow): EmployeeAppraisa
 
 export function toEmployeeRecognition(row: EmployeeRecognitionRow): EmployeeRecognition {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     recordKind: row.recordKind as EmployeeRecognition["recordKind"],
     recognitionType: row.recognitionType,
     title: row.title,
@@ -481,7 +512,8 @@ export function toEmployeeRecognition(row: EmployeeRecognitionRow): EmployeeReco
 
 export function toEmployeeAsset(row: EmployeeAssetRow): EmployeeAsset {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     assetType: row.assetType,
     assetName: row.assetName,
     assetSerialNumber: row.assetSerialNumber,
@@ -496,7 +528,8 @@ export function toEmployeeAsset(row: EmployeeAssetRow): EmployeeAsset {
 
 export function toEmployeePersonalAsset(row: EmployeePersonalAssetRow): EmployeePersonalAsset {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     personalAssetType: row.personalAssetType,
     personalAssetAvailable: row.personalAssetAvailable,
     assetDescription: row.assetDescription,
@@ -511,7 +544,8 @@ export function toEmployeePersonalAsset(row: EmployeePersonalAssetRow): Employee
 
 export function toEmployeePolicy(row: EmployeePolicyRow): EmployeePolicy {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     attendancePolicy: row.attendancePolicy,
     shiftTime: row.shiftTime,
     gracePeriodMinutes: row.gracePeriodMinutes,
@@ -524,9 +558,12 @@ export function toEmployeePolicy(row: EmployeePolicyRow): EmployeePolicy {
   };
 }
 
-export function toEmployeeAttendanceSummary(row: EmployeeAttendanceSummaryRow): EmployeeAttendanceSummary {
+export function toEmployeeAttendanceSummary(
+  row: EmployeeAttendanceSummaryRow,
+): EmployeeAttendanceSummary {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     month: row.month,
     attendanceDaysPresent: row.attendanceDaysPresent,
     workingDays: row.workingDays,
@@ -538,7 +575,8 @@ export function toEmployeeAttendanceSummary(row: EmployeeAttendanceSummaryRow): 
 
 export function toEmployeeLeaveSummary(row: EmployeeLeaveSummaryRow): EmployeeLeaveSummary {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     leaveYear: row.leaveYear,
     leaveType: row.leaveType,
     leaveAppliedDays: row.leaveAppliedDays,
@@ -551,7 +589,8 @@ export function toEmployeeLeaveSummary(row: EmployeeLeaveSummaryRow): EmployeeLe
 
 export function toEmployeeDocument(row: EmployeeDocumentRow): EmployeeHrDocument {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     documentType: row.documentType,
     documentName: row.documentName,
     documentNumber: row.documentNumber,
@@ -565,7 +604,8 @@ export function toEmployeeDocument(row: EmployeeDocumentRow): EmployeeHrDocument
 
 export function toEmployeeProjectHistory(row: EmployeeProjectHistoryRow): EmployeeProjectHistory {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     clientCode: row.clientCode,
     clientName: row.clientName,
     projectOrAssignmentName: row.projectOrAssignmentName,
@@ -578,9 +618,12 @@ export function toEmployeeProjectHistory(row: EmployeeProjectHistoryRow): Employ
   };
 }
 
-export function toEmployeeCompensationHistory(row: EmployeeCompensationHistoryRow): EmployeeCompensationHistory {
+export function toEmployeeCompensationHistory(
+  row: EmployeeCompensationHistoryRow,
+): EmployeeCompensationHistory {
   return {
-    id: row.id, personId: row.personId,
+    id: row.id,
+    personId: row.personId,
     effectiveDate: row.effectiveDate,
     compensationType: row.compensationType,
     previousCtc: row.previousCtc,

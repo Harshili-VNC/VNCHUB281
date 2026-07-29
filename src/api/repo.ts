@@ -34,6 +34,7 @@ import {
   employeeDocuments,
   employeeProjectHistory,
   employeeCompensationHistory,
+  clientHistory,
 } from "../db/schema";
 import {
   toPerson,
@@ -62,6 +63,7 @@ import {
   toEmployeeDocument,
   toEmployeeProjectHistory,
   toEmployeeCompensationHistory,
+  toClientHistory,
   generateId,
 } from "./mappers";
 import type { Person } from "../lib/hierarchy";
@@ -256,7 +258,10 @@ export async function loadClientAccounts(clientId: string) {
 }
 
 export async function loadClientSoftwareStacks(clientId: string) {
-  const rows = await db.select().from(clientSoftwareStacks).where(eq(clientSoftwareStacks.clientId, clientId));
+  const rows = await db
+    .select()
+    .from(clientSoftwareStacks)
+    .where(eq(clientSoftwareStacks.clientId, clientId));
   return rows.map(toClientSoftwareStack);
 }
 
@@ -293,32 +298,50 @@ export async function findDocumentRowById(id: string) {
 // --- Employee sub-module loaders ---
 
 export async function loadEmployeeLearningPaths(personId: string) {
-  const rows = await db.select().from(employeeLearningPaths).where(eq(employeeLearningPaths.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeLearningPaths)
+    .where(eq(employeeLearningPaths.personId, personId));
   return rows.map(toEmployeeLearningPath);
 }
 
 export async function loadEmployeeCourses(personId: string) {
-  const rows = await db.select().from(employeeCourses).where(eq(employeeCourses.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeCourses)
+    .where(eq(employeeCourses.personId, personId));
   return rows.map(toEmployeeCourse);
 }
 
 export async function loadEmployeeCareerPaths(personId: string) {
-  const rows = await db.select().from(employeeCareerPaths).where(eq(employeeCareerPaths.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeCareerPaths)
+    .where(eq(employeeCareerPaths.personId, personId));
   return rows.map(toEmployeeCareerPath);
 }
 
 export async function loadEmployeeKraGoals(personId: string) {
-  const rows = await db.select().from(employeeKraGoals).where(eq(employeeKraGoals.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeKraGoals)
+    .where(eq(employeeKraGoals.personId, personId));
   return rows.map(toEmployeeKraGoal);
 }
 
 export async function loadEmployeeAppraisals(personId: string) {
-  const rows = await db.select().from(employeeAppraisals).where(eq(employeeAppraisals.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeAppraisals)
+    .where(eq(employeeAppraisals.personId, personId));
   return rows.map(toEmployeeAppraisal);
 }
 
 export async function loadEmployeeRecognitions(personId: string) {
-  const rows = await db.select().from(employeeRecognitions).where(eq(employeeRecognitions.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeRecognitions)
+    .where(eq(employeeRecognitions.personId, personId));
   return rows.map(toEmployeeRecognition);
 }
 
@@ -328,36 +351,63 @@ export async function loadEmployeeAssets(personId: string) {
 }
 
 export async function loadEmployeePersonalAssets(personId: string) {
-  const rows = await db.select().from(employeePersonalAssets).where(eq(employeePersonalAssets.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeePersonalAssets)
+    .where(eq(employeePersonalAssets.personId, personId));
   return rows.map(toEmployeePersonalAsset);
 }
 
 export async function loadEmployeePolicy(personId: string) {
-  const [row] = await db.select().from(employeePolicies).where(eq(employeePolicies.personId, personId)).limit(1);
+  const [row] = await db
+    .select()
+    .from(employeePolicies)
+    .where(eq(employeePolicies.personId, personId))
+    .limit(1);
   return row ? toEmployeePolicy(row) : null;
 }
 
 export async function loadEmployeeAttendanceSummaries(personId: string) {
-  const rows = await db.select().from(employeeAttendanceSummaries).where(eq(employeeAttendanceSummaries.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeAttendanceSummaries)
+    .where(eq(employeeAttendanceSummaries.personId, personId));
   return rows.map(toEmployeeAttendanceSummary);
 }
 
 export async function loadEmployeeLeaveSummaries(personId: string) {
-  const rows = await db.select().from(employeeLeaveSummaries).where(eq(employeeLeaveSummaries.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeLeaveSummaries)
+    .where(eq(employeeLeaveSummaries.personId, personId));
   return rows.map(toEmployeeLeaveSummary);
 }
 
 export async function loadEmployeeHrDocuments(personId: string) {
-  const rows = await db.select().from(employeeDocuments).where(eq(employeeDocuments.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeDocuments)
+    .where(eq(employeeDocuments.personId, personId));
   return rows.map(toEmployeeDocument);
 }
 
 export async function loadEmployeeProjectHistory(personId: string) {
-  const rows = await db.select().from(employeeProjectHistory).where(eq(employeeProjectHistory.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeProjectHistory)
+    .where(eq(employeeProjectHistory.personId, personId));
   return rows.map(toEmployeeProjectHistory);
 }
 
 export async function loadEmployeeCompensationHistory(personId: string) {
-  const rows = await db.select().from(employeeCompensationHistory).where(eq(employeeCompensationHistory.personId, personId));
+  const rows = await db
+    .select()
+    .from(employeeCompensationHistory)
+    .where(eq(employeeCompensationHistory.personId, personId));
   return rows.map(toEmployeeCompensationHistory);
+}
+
+export async function loadClientHistory(clientId: string) {
+  const rows = await db.select().from(clientHistory).where(eq(clientHistory.clientId, clientId));
+  return rows.sort((a, b) => b.changedAt.getTime() - a.changedAt.getTime()).map(toClientHistory);
 }

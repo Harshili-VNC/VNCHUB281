@@ -16,7 +16,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/client-approvals")({
   head: () => ({
@@ -124,7 +131,7 @@ function ClientApprovalsPage() {
                       <StatusBadge status={c.recordStatus} />
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap space-x-1">
-                      {canApprove ? (
+                      {canApproveClient(user, c) ? (
                         <>
                           <Button
                             variant="ghost"

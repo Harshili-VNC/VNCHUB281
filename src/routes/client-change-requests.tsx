@@ -5,6 +5,14 @@ import { Plus } from "lucide-react";
 import { AppShell } from "@/components/shell/AppShell";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useWorkspace } from "@/lib/workspace";
+import { useAuth } from "@/lib/auth";
+import {
+  isBUHead,
+  isUserInClientBU,
+  isFinanceOrMarketingHead,
+  canRaiseChangeRequest,
+  canApproveChangeRequest,
+} from "@/lib/client-visibility";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,8 +24,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/client-change-requests")({
   head: () => ({
@@ -27,11 +48,22 @@ export const Route = createFileRoute("/client-change-requests")({
 });
 
 const FIELDS = ["Business Unit", "Billing Entity", "Client Status"] as const;
-
 function ChangeRequestsPage() {
-  const { clients, clientChangeRequests, addClientChangeRequest, applyClientChangeRequest, openClient360 } =
-    useWorkspace();
+  const { user } = useAuth();
+  const {
+    clients,
+    clientChangeRequests,
+    addClientChangeRequest,
+    decideClientChangeRequest,
+    openClient360,
+  } = useWorkspace();
   const [showNew, setShowNew] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [reviewDecision, setReviewDecision] = useState<"Approved" | "Rejected" | "Sent Back">(
+    "Approved",
+  );
+  const [reviewNote, setReviewNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     clientId: "",
@@ -61,13 +93,23 @@ function ChangeRequestsPage() {
     setForm({ clientId: "", field: FIELDS[0], newValue: "", effectiveFrom: "", reason: "" });
   }
 
-  async function apply(id: string) {
-    const result = await applyClientChangeRequest(id);
+  async function submitReview() {
+    if (!selectedRequest) return;
+    if (reviewDecision !== "Approved" && !reviewNote.trim()) {
+      toast.error("Please enter a remark or reason for rejection/correction");
+      return;
+    }
+    setBusy(true);
+    const result = await decideClientChangeRequest(selectedRequest.id, reviewDecision, reviewNote);
+    setBusy(false);
     if (!result.ok) {
       toast.error(result.error);
       return;
     }
-    toast.success("Change applied");
+    toast.success(`Change request ${reviewDecision.toLowerCase()}`);
+    setShowReview(false);
+    setSelectedRequest(null);
+    setReviewNote("");
   }
 
   return (
@@ -84,9 +126,11 @@ function ChangeRequestsPage() {
             Effective-dated changes to Business Unit, Billing Entity, or Client Status.
           </p>
         </div>
-        <Button size="sm" onClick={() => setShowNew(true)}>
-          <Plus className="h-3.5 w-3.5" /> New change request
-        </Button>
+        {canRaiseChangeRequest(user, null) && (
+          <Button size="sm" onClick={() => setShowNew(true)}>
+            <Plus className="h-3.5 w-3.5" /> New change request
+          </Button>
+        )}
       </div>
 
       <div className="px-8 pb-10">
@@ -129,13 +173,30 @@ function ChangeRequestsPage() {
                     <TableCell>{r.effectiveFrom}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{r.reason || "—"}</TableCell>
                     <TableCell>
-                      <StatusBadge status={r.status} />
+                      <StatusBadge
+                        status={r.status === "Pending" && r.reviewedBy ? "Approved" : r.status}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
-                      {r.status === "Pending" ? (
-                        <Button variant="ghost" size="sm" onClick={() => apply(r.id)}>
-                          Apply now
+                      {r.status === "Pending" &&
+                      !r.reviewedBy &&
+                      canApproveChangeRequest(user, clients.find((c) => c.id === r.clientId) ?? null) ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedRequest(r);
+                            setReviewDecision("Approved");
+                            setReviewNote("");
+                            setShowReview(true);
+                          }}
+                        >
+                          Review
                         </Button>
+                      ) : r.status === "Pending" && r.reviewedBy ? (
+                        <span className="text-xs text-emerald-600 font-semibold">
+                          Approved (Future)
+                        </span>
                       ) : (
                         "—"
                       )}
@@ -156,7 +217,10 @@ function ChangeRequestsPage() {
           <div className="space-y-3">
             <div>
               <Label>Client</Label>
-              <Select value={form.clientId} onValueChange={(v) => setForm({ ...form, clientId: v })}>
+              <Select
+                value={form.clientId}
+                onValueChange={(v) => setForm({ ...form, clientId: v })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a client" />
                 </SelectTrigger>
@@ -189,7 +253,10 @@ function ChangeRequestsPage() {
             </div>
             <div>
               <Label>New value</Label>
-              <Input value={form.newValue} onChange={(e) => setForm({ ...form, newValue: e.target.value })} />
+              <Input
+                value={form.newValue}
+                onChange={(e) => setForm({ ...form, newValue: e.target.value })}
+              />
             </div>
             <div>
               <Label>Effective from</Label>
@@ -201,7 +268,10 @@ function ChangeRequestsPage() {
             </div>
             <div>
               <Label>Reason</Label>
-              <Textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
+              <Textarea
+                value={form.reason}
+                onChange={(e) => setForm({ ...form, reason: e.target.value })}
+              />
             </div>
           </div>
           <DialogFooter>
@@ -210,6 +280,112 @@ function ChangeRequestsPage() {
             </Button>
             <Button onClick={submit} disabled={busy}>
               {busy ? "Submitting…" : "Submit"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showReview} onOpenChange={setShowReview}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Review Change Request</DialogTitle>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4 text-xs">
+              <div className="p-3 bg-surface-2 rounded-xl border border-border space-y-1.5">
+                <div>
+                  <span className="text-muted-foreground block text-[10px] uppercase font-medium">
+                    Client
+                  </span>
+                  <span className="font-semibold">
+                    {clientCode(selectedRequest.clientId)} — {clientName(selectedRequest.clientId)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border/50">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase font-medium">
+                      Field
+                    </span>
+                    <span className="font-semibold">{selectedRequest.field}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase font-medium">
+                      Effective Date
+                    </span>
+                    <span className="font-semibold">{selectedRequest.effectiveFrom}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border/50">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase font-medium">
+                      Previous Value
+                    </span>
+                    <span className="font-semibold text-muted-foreground line-through">
+                      {selectedRequest.previousValue || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase font-medium">
+                      New Value
+                    </span>
+                    <span className="font-semibold text-emerald-600">
+                      {selectedRequest.newValue}
+                    </span>
+                  </div>
+                </div>
+                {selectedRequest.reason && (
+                  <div className="pt-1 border-t border-border/50">
+                    <span className="text-muted-foreground block text-[10px] uppercase font-medium">
+                      Request Reason
+                    </span>
+                    <p className="mt-0.5 text-muted-foreground leading-relaxed">
+                      {selectedRequest.reason}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label>Decision</Label>
+                <Select value={reviewDecision} onValueChange={(v) => setReviewDecision(v as any)}>
+                  <SelectTrigger className="w-full mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Approved">Approve</SelectItem>
+                    <SelectItem value="Rejected">Reject</SelectItem>
+                    <SelectItem value="Sent Back">Send Back for Correction</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Review Remarks / Notes {reviewDecision !== "Approved" && "*"}</Label>
+                <Textarea
+                  placeholder={
+                    reviewDecision === "Approved"
+                      ? "Optional notes..."
+                      : "Please enter the reason for rejecting or sending back..."
+                  }
+                  value={reviewNote}
+                  onChange={(e) => setReviewNote(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowReview(false);
+                setSelectedRequest(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={submitReview} disabled={busy}>
+              {busy ? "Processing…" : "Submit Review"}
             </Button>
           </DialogFooter>
         </DialogContent>

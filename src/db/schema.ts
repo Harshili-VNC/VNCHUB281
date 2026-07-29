@@ -67,7 +67,11 @@ export const importJobStatusEnum = pgEnum("import_job_status", [
   "Completed with errors",
   "Failed",
 ]);
-export const exportJobStatusEnum = pgEnum("export_job_status", ["Processing", "Completed", "Failed"]);
+export const exportJobStatusEnum = pgEnum("export_job_status", [
+  "Processing",
+  "Completed",
+  "Failed",
+]);
 
 // --- Employee sub-module enums ---------------------------------------------
 export const learningPathStatusEnum = pgEnum("learning_path_status", [
@@ -76,7 +80,11 @@ export const learningPathStatusEnum = pgEnum("learning_path_status", [
   "Completed",
   "On Hold",
 ]);
-export const courseStatusEnum = pgEnum("course_status", ["Not Started", "In Progress", "Completed"]);
+export const courseStatusEnum = pgEnum("course_status", [
+  "Not Started",
+  "In Progress",
+  "Completed",
+]);
 export const learningCategoryEnum = pgEnum("learning_category", [
   "Software Learning",
   "Soft Skills Learning",
@@ -690,4 +698,15 @@ export const analysisReports = pgTable("analysis_reports", {
   content: text("content").notNull(),
   generatedBy: text("generated_by").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const clientHistory = pgTable("client_history", {
+  id: text("id").primaryKey(),
+  clientId: text("client_id").notNull(),
+  action: text("action").notNull(),
+  previousValue: text("previous_value"),
+  newValue: text("new_value"),
+  remarks: text("remarks"),
+  changedBy: text("changed_by").notNull(),
+  changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
 });

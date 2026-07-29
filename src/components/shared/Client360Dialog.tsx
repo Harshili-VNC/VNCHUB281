@@ -35,22 +35,49 @@ interface Client360DialogProps {
   onClose: () => void;
 }
 
-type TabKey = "overview" | "contacts" | "accounts" | "software" | "team" | "commercial" | "timeline" | "documents";
+type TabKey =
+  | "overview"
+  | "contacts"
+  | "accounts"
+  | "software"
+  | "team"
+  | "commercial"
+  | "timeline"
+  | "documents";
 
 export function Client360Dialog({ client, open, onClose }: Client360DialogProps) {
   const { user, people } = useAuth();
-  const { clientChangeRequests, getClientAccounts } = useWorkspace();
+  const { clientChangeRequests, getClientAccounts, getClientSoftwareStacks, getClientHistory } =
+    useWorkspace();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [accounts, setAccounts] = useState<ClientAccount[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [softwareStacks, setSoftwareStacks] = useState<any[]>([]);
+  const [loadingSoftware, setLoadingSoftware] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
-    if (open && client && activeTab === "accounts") {
-      setLoadingAccounts(true);
-      getClientAccounts(client.id)
-        .then((res) => setAccounts(res))
-        .catch(() => setAccounts([]))
-        .finally(() => setLoadingAccounts(false));
+    if (open && client) {
+      if (activeTab === "accounts") {
+        setLoadingAccounts(true);
+        getClientAccounts(client.id)
+          .then((res) => setAccounts(res))
+          .catch(() => setAccounts([]))
+          .finally(() => setLoadingAccounts(false));
+      } else if (activeTab === "software") {
+        setLoadingSoftware(true);
+        getClientSoftwareStacks(client.id)
+          .then((res) => setSoftwareStacks(res))
+          .catch(() => setSoftwareStacks([]))
+          .finally(() => setLoadingSoftware(false));
+      } else if (activeTab === "timeline") {
+        setLoadingHistory(true);
+        getClientHistory(client.id)
+          .then((res) => setHistory(res))
+          .catch(() => setHistory([]))
+          .finally(() => setLoadingHistory(false));
+      }
     }
   }, [open, client, activeTab]);
 
@@ -82,13 +109,26 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                 <StatusBadge status={client.recordStatus} />
               </div>
               <div className="text-xs text-muted-foreground flex items-center gap-3 flex-wrap pt-0.5">
-                <span>Code: <strong className="text-foreground">{client.code ?? "Draft"}</strong></span>
+                <span>
+                  Code: <strong className="text-foreground">{client.code ?? "Draft"}</strong>
+                </span>
                 <span>•</span>
-                <span>BU: <strong className="text-foreground">{client.businessUnit ?? "Unassigned"}</strong></span>
+                <span>
+                  BU:{" "}
+                  <strong className="text-foreground">{client.businessUnit ?? "Unassigned"}</strong>
+                </span>
                 <span>•</span>
-                <span>Entity: <strong className="text-foreground">{client.billingEntity ?? "Default"}</strong></span>
+                <span>
+                  Entity:{" "}
+                  <strong className="text-foreground">{client.billingEntity ?? "Default"}</strong>
+                </span>
                 <span>•</span>
-                <span>Support Level: <strong className="text-accent font-medium">{client.clientSupportLevel ?? "Level 2 - Standard Client"}</strong></span>
+                <span>
+                  Support Level:{" "}
+                  <strong className="text-accent font-medium">
+                    {client.clientSupportLevel ?? "Level 2 - Standard Client"}
+                  </strong>
+                </span>
               </div>
             </div>
           </div>
@@ -117,7 +157,9 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
             >
               <tab.icon className="h-3.5 w-3.5" />
               {tab.label}
-              {tab.sensitive && !canViewSensitive && <Lock className="h-3 w-3 text-amber-500 ml-0.5" />}
+              {tab.sensitive && !canViewSensitive && (
+                <Lock className="h-3 w-3 text-amber-500 ml-0.5" />
+              )}
             </button>
           ))}
         </div>
@@ -131,7 +173,9 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                 <span className="font-semibold text-foreground">{client.name}</span>
               </div>
               <div>
-                <span className="text-muted-foreground block text-[11px]">Legal Registered Name</span>
+                <span className="text-muted-foreground block text-[11px]">
+                  Legal Registered Name
+                </span>
                 <span className="font-semibold text-foreground">{client.legalName || "—"}</span>
               </div>
               <div>
@@ -139,7 +183,9 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                 <span className="font-semibold text-foreground">{client.shortName || "—"}</span>
               </div>
               <div>
-                <span className="text-muted-foreground block text-[11px]">Primary Business Unit</span>
+                <span className="text-muted-foreground block text-[11px]">
+                  Primary Business Unit
+                </span>
                 <span className="font-semibold text-foreground">{client.businessUnit || "—"}</span>
               </div>
               <div>
@@ -152,11 +198,15 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
               </div>
               <div>
                 <span className="text-muted-foreground block text-[11px]">Company Phone</span>
-                <span className="font-semibold text-foreground">{client.companyPhoneNumber || "—"}</span>
+                <span className="font-semibold text-foreground">
+                  {client.companyPhoneNumber || "—"}
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground block text-[11px]">Support Level</span>
-                <span className="font-semibold text-foreground">{client.clientSupportLevel || "—"}</span>
+                <span className="font-semibold text-foreground">
+                  {client.clientSupportLevel || "—"}
+                </span>
               </div>
               <div>
                 <span className="text-muted-foreground block text-[11px]">Record Status</span>
@@ -209,11 +259,21 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
             <div className="p-4 rounded-2xl border border-border bg-elevated text-xs space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm">{client.name} Main Contact</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold text-[10.5px]">Primary Contact</span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold text-[10.5px]">
+                  Primary Contact
+                </span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-muted-foreground pt-1">
-                <div>Phone: <strong className="text-foreground">{client.companyPhoneNumber || "—"}</strong></div>
-                <div>Location: <strong className="text-foreground">{client.clientCity ? `${client.clientCity}, ${client.clientCountry}` : "—"}</strong></div>
+                <div>
+                  Phone:{" "}
+                  <strong className="text-foreground">{client.companyPhoneNumber || "—"}</strong>
+                </div>
+                <div>
+                  Location:{" "}
+                  <strong className="text-foreground">
+                    {client.clientCity ? `${client.clientCity}, ${client.clientCountry}` : "—"}
+                  </strong>
+                </div>
               </div>
             </div>
           </div>
@@ -227,12 +287,15 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                 <Laptop className="h-4 w-4 text-accent" /> Managed Accounts Breakdown
               </div>
               <p className="text-muted-foreground">
-                Configured with <strong>{client.numberOfAccounts ?? accounts.length ?? 1}</strong> managed account entity/entities under {client.name}.
+                Configured with <strong>{client.numberOfAccounts ?? accounts.length ?? 1}</strong>{" "}
+                managed account entity/entities under {client.name}.
               </p>
             </div>
 
             {loadingAccounts ? (
-              <div className="p-8 text-center text-xs text-muted-foreground">Loading accounts data…</div>
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                Loading accounts data…
+              </div>
             ) : accounts.length === 0 ? (
               <div className="rounded-xl border border-border overflow-hidden text-xs">
                 <table className="w-full text-left">
@@ -248,9 +311,19 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                     {Array.from({ length: client.numberOfAccounts ?? 1 }).map((_, i) => (
                       <tr key={i}>
                         <td className="p-3 text-muted-foreground font-medium">{i + 1}</td>
-                        <td className="p-3 font-semibold">{client.name} Entity {i + 1}</td>
-                        <td className="p-3"><span className="text-emerald-500 font-medium">In Scope</span></td>
-                        <td className="p-3">{i === 0 ? <span className="text-accent font-semibold">Primary</span> : "Secondary"}</td>
+                        <td className="p-3 font-semibold">
+                          {client.name} Entity {i + 1}
+                        </td>
+                        <td className="p-3">
+                          <span className="text-emerald-500 font-medium">In Scope</span>
+                        </td>
+                        <td className="p-3">
+                          {i === 0 ? (
+                            <span className="text-accent font-semibold">Primary</span>
+                          ) : (
+                            "Secondary"
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -272,31 +345,52 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                   </thead>
                   <tbody className="divide-y divide-border">
                     {accounts.map((acc, i) => (
-                      <tr key={acc.id || i} className={acc.isPrimaryAccount ? "bg-accent/5 font-medium" : ""}>
+                      <tr
+                        key={acc.id || i}
+                        className={acc.isPrimaryAccount ? "bg-accent/5 font-medium" : ""}
+                      >
                         <td className="p-3 text-muted-foreground">{i + 1}</td>
                         <td className="p-3">
                           <div className="font-semibold text-foreground">{acc.accountName}</div>
-                          {acc.accountCode && <div className="text-[11px] text-muted-foreground">Code: {acc.accountCode}</div>}
+                          {acc.accountCode && (
+                            <div className="text-[11px] text-muted-foreground">
+                              Code: {acc.accountCode}
+                            </div>
+                          )}
                         </td>
                         <td className="p-3">
                           {acc.isPrimaryAccount ? (
-                            <span className="px-2 py-0.5 rounded-full bg-accent/15 text-accent font-semibold text-[10.5px]">Primary</span>
+                            <span className="px-2 py-0.5 rounded-full bg-accent/15 text-accent font-semibold text-[10.5px]">
+                              Primary
+                            </span>
                           ) : (
                             <span className="text-muted-foreground">Secondary</span>
                           )}
                         </td>
                         <td className="p-3">
                           <div>{acc.accountLegalStructure || "—"}</div>
-                          {acc.billingEntity && <div className="text-[11px] text-muted-foreground">Billing: {acc.billingEntity}</div>}
+                          {acc.billingEntity && (
+                            <div className="text-[11px] text-muted-foreground">
+                              Billing: {acc.billingEntity}
+                            </div>
+                          )}
                         </td>
                         <td className="p-3 text-muted-foreground">
-                          {acc.city || acc.country ? `${acc.city || ""}${acc.city && acc.country ? ", " : ""}${acc.country || ""}` : "—"}
+                          {acc.city || acc.country
+                            ? `${acc.city || ""}${acc.city && acc.country ? ", " : ""}${acc.country || ""}`
+                            : "—"}
                         </td>
-                        <td className="p-3 text-muted-foreground">{acc.taxRegistrationNumber || "—"}</td>
+                        <td className="p-3 text-muted-foreground">
+                          {acc.taxRegistrationNumber || "—"}
+                        </td>
                         <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-semibold ${
-                            acc.accountStatus === "Inactive" ? "bg-rose-500/10 text-rose-600" : "bg-emerald-500/10 text-emerald-600"
-                          }`}>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10.5px] font-semibold ${
+                              acc.accountStatus === "Inactive"
+                                ? "bg-rose-500/10 text-rose-600"
+                                : "bg-emerald-500/10 text-emerald-600"
+                            }`}
+                          >
                             {acc.accountStatus || "Active"}
                           </span>
                         </td>
@@ -315,24 +409,85 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <CreditCard className="h-3.5 w-3.5 text-accent" /> Client Software Ecosystem
             </h4>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl border border-border bg-surface-2">
-                <span className="text-muted-foreground text-[11px] block">Accounting Software</span>
-                <span className="font-semibold">Xero / QuickBooks Online</span>
+
+            {loadingSoftware ? (
+              <div className="text-center py-6 text-xs text-muted-foreground">
+                Loading software stack details...
               </div>
-              <div className="p-3 rounded-xl border border-border bg-surface-2">
-                <span className="text-muted-foreground text-[11px] block">Payroll Software</span>
-                <span className="font-semibold">Employment Hero / KeyPay</span>
+            ) : softwareStacks.length === 0 ? (
+              <div className="p-6 rounded-2xl border border-dashed border-border bg-surface-2/40 text-center text-xs text-muted-foreground">
+                No software stack configuration found for this client.
               </div>
-              <div className="p-3 rounded-xl border border-border bg-surface-2">
-                <span className="text-muted-foreground text-[11px] block">AP Automation</span>
-                <span className="font-semibold">Dext / Hubdoc</span>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {softwareStacks.map((stack) => {
+                  const selected =
+                    typeof stack.selectedSoftware === "string"
+                      ? JSON.parse(stack.selectedSoftware)
+                      : stack.selectedSoftware || [];
+                  const urls =
+                    typeof stack.loginUrls === "string"
+                      ? JSON.parse(stack.loginUrls)
+                      : stack.loginUrls || [];
+                  const hasSelection = selected.length > 0;
+                  const isNA = selected.includes("NA");
+
+                  return (
+                    <div
+                      key={stack.category}
+                      className="p-4 rounded-2xl border border-border bg-card space-y-2"
+                    >
+                      <div className="flex items-center justify-between border-b border-border/40 pb-1.5">
+                        <span className="font-bold text-foreground text-[12px]">
+                          {stack.category}
+                        </span>
+                        {isNA && (
+                          <span className="text-[9px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                            NA
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-[10px] block font-medium">
+                          Selected Tools
+                        </span>
+                        <span className="font-semibold text-foreground">
+                          {hasSelection ? selected.join(", ") : "None configured"}
+                        </span>
+                      </div>
+                      {stack.otherDetails && (
+                        <div>
+                          <span className="text-muted-foreground text-[10px] block font-medium">
+                            Other Details
+                          </span>
+                          <span className="text-foreground">{stack.otherDetails}</span>
+                        </div>
+                      )}
+                      {urls.length > 0 && !isNA && (
+                        <div>
+                          <span className="text-muted-foreground text-[10px] block font-medium mb-0.5">
+                            Login URLs
+                          </span>
+                          <div className="space-y-1">
+                            {urls.map((url: string, uIdx: number) => (
+                              <a
+                                key={uIdx}
+                                href={url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-accent hover:underline flex items-center gap-1 text-[11px] truncate font-medium"
+                              >
+                                {url} <ExternalLink className="h-3 w-3 shrink-0" />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              <div className="p-3 rounded-xl border border-border bg-surface-2">
-                <span className="text-muted-foreground text-[11px] block">Reporting Tools</span>
-                <span className="font-semibold">Fathom / Syft Analytics</span>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -347,24 +502,36 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
               /* Case 1: Team Lead is not assigned */
               <div className="p-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-center space-y-2 text-xs">
                 <AlertCircle className="h-6 w-6 text-amber-500 mx-auto" />
-                <h4 className="font-semibold text-foreground text-sm">Team Lead Assignment Pending</h4>
+                <h4 className="font-semibold text-foreground text-sm">
+                  Team Lead Assignment Pending
+                </h4>
                 <p className="text-muted-foreground font-medium max-w-md mx-auto">
                   Waiting for Business Unit Head to assign Team Lead.
                 </p>
               </div>
-            ) : !client.assistantTeamLeadId && !client.businessUnitManagerId && !client.financeAnalyst1Id ? (
+            ) : !client.assistantTeamLeadId &&
+              !client.businessUnitManagerId &&
+              !client.financeAnalyst1Id ? (
               /* Case 2: Team Lead is assigned but team is empty */
               <div className="space-y-4">
                 <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-xs flex items-center justify-between">
                   <div>
-                    <span className="text-muted-foreground text-[11px] block font-medium">Assigned Team Lead</span>
-                    <span className="font-bold text-foreground text-sm">{teamLead ? teamLead.name : "Assigned"}</span>
+                    <span className="text-muted-foreground text-[11px] block font-medium">
+                      Assigned Team Lead
+                    </span>
+                    <span className="font-bold text-foreground text-sm">
+                      {teamLead ? teamLead.name : "Assigned"}
+                    </span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-600 font-semibold text-xs">Team Lead Assigned</span>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-600 font-semibold text-xs">
+                    Team Lead Assigned
+                  </span>
                 </div>
                 <div className="p-6 rounded-2xl border border-dashed border-border bg-surface-2/40 text-center space-y-2 text-xs">
                   <Clock className="h-6 w-6 text-accent mx-auto" />
-                  <h4 className="font-semibold text-foreground text-sm">Delivery Team Construction Pending</h4>
+                  <h4 className="font-semibold text-foreground text-sm">
+                    Delivery Team Construction Pending
+                  </h4>
                   <p className="text-muted-foreground font-medium max-w-md mx-auto">
                     Waiting for Team Lead to build the delivery team.
                   </p>
@@ -382,13 +549,21 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                   <span className="font-semibold">{buManager ? buManager.name : "Unassigned"}</span>
                 </div>
                 <div className="p-3 rounded-xl border border-border bg-surface-2 col-span-2">
-                  <span className="text-muted-foreground text-[11px] block">Assistant Team Lead</span>
-                  <span className="font-semibold">{assistantLead ? assistantLead.name : "Unassigned"}</span>
+                  <span className="text-muted-foreground text-[11px] block">
+                    Assistant Team Lead
+                  </span>
+                  <span className="font-semibold">
+                    {assistantLead ? assistantLead.name : "Unassigned"}
+                  </span>
                 </div>
                 {client.financeAnalyst1Id && (
                   <div className="p-3 rounded-xl border border-border bg-surface-2 col-span-2">
-                    <span className="text-muted-foreground text-[11px] block">Primary Finance Analyst</span>
-                    <span className="font-semibold">{findPerson(client.financeAnalyst1Id)?.name ?? "Assigned"}</span>
+                    <span className="text-muted-foreground text-[11px] block">
+                      Primary Finance Analyst
+                    </span>
+                    <span className="font-semibold">
+                      {findPerson(client.financeAnalyst1Id)?.name ?? "Assigned"}
+                    </span>
                   </div>
                 )}
               </div>
@@ -402,9 +577,13 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
             {!canViewSensitive ? (
               <div className="p-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-center space-y-2 text-xs">
                 <Lock className="h-6 w-6 text-amber-500 mx-auto" />
-                <h4 className="font-semibold text-foreground text-sm">Commercial Information Restricted</h4>
+                <h4 className="font-semibold text-foreground text-sm">
+                  Commercial Information Restricted
+                </h4>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Contract details, billing frequencies, payment terms, and financial notes are confidential and visible only to Executive Leadership (CEO, MD, Admin) and the Business Unit Head.
+                  Contract details, billing frequencies, payment terms, and financial notes are
+                  confidential and visible only to Executive Leadership (CEO, MD, Admin) and the
+                  Business Unit Head.
                 </p>
               </div>
             ) : (
@@ -415,7 +594,9 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                     <span className="font-semibold">{client.contractType || "—"}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground text-[11px] block">Billing Frequency</span>
+                    <span className="text-muted-foreground text-[11px] block">
+                      Billing Frequency
+                    </span>
                     <span className="font-semibold">{client.billingFrequency || "—"}</span>
                   </div>
                   <div>
@@ -423,11 +604,15 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                     <span className="font-semibold">{client.billingType || "—"}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground text-[11px] block">Contract Start Date</span>
+                    <span className="text-muted-foreground text-[11px] block">
+                      Contract Start Date
+                    </span>
                     <span className="font-semibold">{client.contractStart || "—"}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground text-[11px] block">Billing Start Date</span>
+                    <span className="text-muted-foreground text-[11px] block">
+                      Billing Start Date
+                    </span>
                     <span className="font-semibold">{client.billingStartDate || "—"}</span>
                   </div>
                   <div>
@@ -441,13 +626,19 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                 </div>
 
                 <div className="p-4 rounded-2xl border border-border bg-surface-2 text-xs space-y-2">
-                  <span className="text-muted-foreground text-[11px] block font-medium">Scope Summary</span>
-                  <p className="font-normal text-foreground leading-relaxed">{client.scopeSummary || "End-to-end accounting & reporting service."}</p>
+                  <span className="text-muted-foreground text-[11px] block font-medium">
+                    Scope Summary
+                  </span>
+                  <p className="font-normal text-foreground leading-relaxed">
+                    {client.scopeSummary || "End-to-end accounting & reporting service."}
+                  </p>
                 </div>
 
                 {client.billingNotes && (
                   <div className="p-4 rounded-2xl border border-border bg-surface-2 text-xs space-y-2">
-                    <span className="text-muted-foreground text-[11px] block font-medium">Billing & Escalation Notes</span>
+                    <span className="text-muted-foreground text-[11px] block font-medium">
+                      Billing & Escalation Notes
+                    </span>
                     <p className="font-normal text-foreground">{client.billingNotes}</p>
                   </div>
                 )}
@@ -458,29 +649,91 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
 
         {/* TAB 7: APPROVAL TIMELINE & CHANGES */}
         {activeTab === "timeline" && (
-          <div className="space-y-4 pt-2 text-xs">
+          <div className="space-y-6 pt-2 text-xs">
             <div className="p-4 rounded-2xl border border-border bg-surface-2 space-y-3">
               <h4 className="font-semibold text-foreground flex items-center gap-1.5">
                 <Clock className="h-4 w-4 text-accent" /> Client Approval Audit Trail
               </h4>
-              <div className="grid grid-cols-2 gap-3 border-t border-border pt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-border pt-3">
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Created By</span>
-                  <span className="font-medium">{client.createdBy || "System Admin"}</span>
+                  <span className="font-semibold text-foreground">
+                    {client.createdBy || "System Admin"}
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Created Date</span>
-                  <span className="font-medium">{client.createdAt || "2026-01-01"}</span>
+                  <span className="font-semibold text-foreground">
+                    {client.createdAt || "2026-01-01"}
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Last Updated By</span>
-                  <span className="font-medium">{client.lastUpdatedBy || "—"}</span>
+                  <span className="font-semibold text-foreground">
+                    {client.lastUpdatedBy || "—"}
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Approved By</span>
-                  <span className="font-medium">{client.approvedBy || "—"}</span>
+                  <span className="font-semibold text-foreground">{client.approvedBy || "—"}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Chronological History Log Timeline */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-foreground flex items-center gap-1.5">
+                <History className="h-4 w-4 text-accent" /> Chronological Activity History
+              </h4>
+              {loadingHistory ? (
+                <div className="text-center py-6 text-xs text-muted-foreground">
+                  Loading history logs...
+                </div>
+              ) : history.length === 0 ? (
+                <div className="p-6 rounded-2xl border border-dashed border-border bg-surface-2/40 text-center text-xs text-muted-foreground">
+                  No chronological history logs recorded yet.
+                </div>
+              ) : (
+                <div className="relative pl-6 border-l-2 border-border ml-2 space-y-4 py-2">
+                  {history.map((h, hIdx) => {
+                    const changedByPerson = findPerson(h.changedBy);
+                    const formattedDate = h.changedAt
+                      ? new Date(h.changedAt).toLocaleString()
+                      : "Unknown date";
+                    return (
+                      <div key={h.id || hIdx} className="relative">
+                        {/* Timeline dot */}
+                        <div className="absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-full border-2 border-background bg-accent flex items-center justify-center">
+                          <div className="h-1.5 w-1.5 rounded-full bg-background" />
+                        </div>
+                        <div className="bg-card p-3.5 rounded-xl border border-border space-y-1.5">
+                          <div className="flex items-center justify-between gap-4 flex-wrap">
+                            <span className="font-semibold text-foreground text-xs">
+                              {h.action}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-medium">
+                              {formattedDate}
+                            </span>
+                          </div>
+                          {h.remarks && (
+                            <p className="text-muted-foreground leading-relaxed text-[11px] bg-surface-2/50 px-2 py-1 rounded">
+                              Remarks: {h.remarks}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-1 text-[10.5px] text-muted-foreground">
+                            <span>Logged by:</span>
+                            <span className="font-semibold text-foreground">
+                              {changedByPerson
+                                ? `${changedByPerson.name} (${changedByPerson.designation || changedByPerson.departmentFunction})`
+                                : h.changedBy || "System"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {relatedChangeRequests.length > 0 && (
@@ -502,7 +755,9 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                           <td className="p-2.5 font-medium">{cr.field}</td>
                           <td className="p-2.5">{cr.newValue}</td>
                           <td className="p-2.5">{cr.effectiveFrom}</td>
-                          <td className="p-2.5"><StatusBadge status={cr.status} /></td>
+                          <td className="p-2.5">
+                            <StatusBadge status={cr.status} />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -520,7 +775,8 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
               <FileText className="h-8 w-8 text-muted-foreground mx-auto" />
               <h4 className="font-semibold text-foreground">Client Document Repository</h4>
               <p className="text-muted-foreground max-w-sm mx-auto">
-                No custom contracts or attachments uploaded yet. Contracts and SLAs can be linked in the Document Storage Link section.
+                No custom contracts or attachments uploaded yet. Contracts and SLAs can be linked in
+                the Document Storage Link section.
               </p>
             </div>
           </div>

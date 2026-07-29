@@ -2,7 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getBootstrapFn } from "../api/queries";
+import { getBootstrapFn, getClientDetailsFn } from "../api/queries";
 import { addTaskFn, setTaskStatusFn } from "../api/tasks.mutations";
 import { requestLeaveFn, decideLeaveFn } from "../api/leave.mutations";
 import { uploadDocumentFn, deleteDocumentFn } from "../api/documents.mutations";
@@ -16,6 +16,8 @@ import {
   assignClientTeamOwnershipFn,
   setClientAccountsFn,
   getClientAccountsFn,
+  decideClientChangeRequestFn,
+  processDueChangeRequestsFn,
 } from "../api/clients.mutations";
 import type { ClientAccount } from "./documents";
 import { runImportFn } from "../api/imports.mutations";
@@ -280,9 +282,17 @@ type WorkspaceContextValue = {
   ) => Promise<Result>;
   addClientChangeRequest: (input: ChangeRequestInput) => Promise<Result>;
   applyClientChangeRequest: (id: string) => Promise<Result>;
+  decideClientChangeRequest: (
+    id: string,
+    decision: "Approved" | "Rejected" | "Sent Back",
+    note?: string,
+  ) => Promise<Result>;
+  processDueChangeRequests: () => Promise<Result & { count?: number }>;
   assignClientTeamOwnership: (input: TeamOwnershipInput) => Promise<Result>;
   setClientAccounts: (clientId: string, accounts: AccountItem[]) => Promise<Result>;
   getClientAccounts: (clientId: string) => Promise<ClientAccount[]>;
+  getClientSoftwareStacks: (clientId: string) => Promise<any[]>;
+  getClientHistory: (clientId: string) => Promise<any[]>;
   runImport: (input: {
     module: ImportExportModule;
     fileName: string;
@@ -314,7 +324,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   function openClient360(clientOrId: string | ClientRecord) {
     if (typeof clientOrId === "string") {
-      const match = clients.find((c) => c.id === clientOrId || c.name.toLowerCase() === clientOrId.toLowerCase());
+      const match = clients.find(
+        (c) => c.id === clientOrId || c.name.toLowerCase() === clientOrId.toLowerCase(),
+      );
       if (match) setSelected360Client(match);
     } else {
       setSelected360Client(clientOrId);
@@ -365,9 +377,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return result;
   }
 
-  async function addClient(
-    input: ClientInput,
-  ): Promise<Result & { id?: string; code?: string }> {
+  async function addClient(input: ClientInput): Promise<Result & { id?: string; code?: string }> {
     const result = await addClientFn({ data: input });
     if (result.ok) await refresh();
     return result;
@@ -407,6 +417,22 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return result;
   }
 
+  async function decideClientChangeRequest(
+    id: string,
+    decision: "Approved" | "Rejected" | "Sent Back",
+    note?: string,
+  ): Promise<Result> {
+    const result = await decideClientChangeRequestFn({ data: { id, decision, note } });
+    if (result.ok) await refresh();
+    return result;
+  }
+
+  async function processDueChangeRequests(): Promise<Result & { count?: number }> {
+    const result = await processDueChangeRequestsFn();
+    if (result.ok) await refresh();
+    return result;
+  }
+
   async function assignClientTeamOwnership(input: TeamOwnershipInput): Promise<Result> {
     const result = await assignClientTeamOwnershipFn({ data: input });
     if (result.ok) await refresh();
@@ -427,6 +453,24 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function getClientSoftwareStacks(clientId: string): Promise<any[]> {
+    try {
+      const details = await getClientDetailsFn({ data: { clientId } });
+      return details.softwareStacks || [];
+    } catch {
+      return [];
+    }
+  }
+
+  async function getClientHistory(clientId: string): Promise<any[]> {
+    try {
+      const details = await getClientDetailsFn({ data: { clientId } });
+      return details.history || [];
+    } catch {
+      return [];
+    }
+  }
+
   async function runImport(input: {
     module: ImportExportModule;
     fileName: string;
@@ -437,9 +481,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return result;
   }
 
-  async function createExport(input: {
-    module: ImportExportModule;
-  }): Promise<ExportResult> {
+  async function createExport(input: { module: ImportExportModule }): Promise<ExportResult> {
     const result = await createExportFn({ data: input });
     if (result.ok) await refresh();
     return result;
@@ -470,9 +512,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     decideClientApproval,
     addClientChangeRequest,
     applyClientChangeRequest,
+    decideClientChangeRequest,
+    processDueChangeRequests,
     assignClientTeamOwnership,
     setClientAccounts,
     getClientAccounts,
+    getClientSoftwareStacks,
+    getClientHistory,
     runImport,
     createExport,
   };
