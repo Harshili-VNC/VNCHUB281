@@ -1,0 +1,33 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependency directories
+node_modules/
+
+# Local environment files
+.env
+.env.local
+
+# Build & Tool outputs
+.output/
+.wrangler/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/Editor config
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# User uploads
+uploads/*
+!uploads/.gitkeep
