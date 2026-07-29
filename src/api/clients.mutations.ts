@@ -10,19 +10,20 @@ import { findPersonById, findClientById, countClients } from "./repo";
 import { generateId } from "./mappers";
 import { nextClientCode } from "../lib/documents";
 
+import {
+  canCreateClient,
+  canEditClient,
+  canSubmitClient,
+  canApproveClient,
+  canManageClientMaster,
+  canManageTeam,
+} from "../lib/client-visibility";
+
 async function requireCurrentUser() {
   const personId = await getSessionPersonId();
   if (!personId) return null;
   const person = await findPersonById(personId);
   return person && person.status === "active" ? person : null;
-}
-
-function canManageClientMaster(person: { departmentFunction: string }) {
-  return person.departmentFunction === "Finance" || person.departmentFunction === "Admin" || person.departmentFunction === "Leadership";
-}
-
-function canApproveClientMaster(person: { isBusinessUnitHead: boolean; departmentFunction: string }) {
-  return person.isBusinessUnitHead || person.departmentFunction === "Leadership" || person.departmentFunction === "Admin";
 }
 
 const clientFields = {
@@ -71,8 +72,8 @@ export const addClientFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
-    if (!canManageClientMaster(user)) {
-      return { ok: false as const, error: "Only Finance, Admin, or Leadership can create client records." };
+    if (!canCreateClient(user)) {
+      return { ok: false as const, error: "Only Marketing Head or Finance Head can create a new client." };
     }
 
     const name = data.name.trim();
@@ -134,12 +135,12 @@ export const updateClientFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
-    if (!canManageClientMaster(user)) {
-      return { ok: false as const, error: "Only Finance, Admin, or Leadership can edit client records." };
-    }
 
     const target = await findClientById(data.id);
     if (!target) return { ok: false as const, error: "Client not found." };
+    if (!canEditClient(user, target)) {
+      return { ok: false as const, error: "Only Marketing Head or Finance Head can edit client records created by themselves or sent back for correction." };
+    }
 
     await db
       .update(clients)
@@ -190,8 +191,11 @@ export const submitClientForReviewFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
-    if (!canManageClientMaster(user)) {
-      return { ok: false as const, error: "Only Finance, Admin, or Leadership can submit client records for review." };
+
+    const target = await findClientById(data.id);
+    if (!target) return { ok: false as const, error: "Client not found." };
+    if (!canSubmitClient(user, target)) {
+      return { ok: false as const, error: "Only Marketing Head or Finance Head can submit client records for approval." };
     }
 
     await db
@@ -212,8 +216,11 @@ export const decideClientApprovalFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
-    if (!canApproveClientMaster(user)) {
-      return { ok: false as const, error: "Only the BU Head, Admin, or Leadership can approve, reject, or send back client records." };
+
+    const target = await findClientById(data.id);
+    if (!target) return { ok: false as const, error: "Client not found." };
+    if (!canApproveClient(user, target)) {
+      return { ok: false as const, error: "Only the Business Unit Head for this client can approve, reject, or send back." };
     }
     if (data.decision !== "Approved" && !data.note?.trim()) {
       return {
@@ -221,9 +228,6 @@ export const decideClientApprovalFn = createServerFn({ method: "POST" })
         error: "Rejection / Correction Notes are required when rejecting or sending back for correction.",
       };
     }
-
-    const target = await findClientById(data.id);
-    if (!target) return { ok: false as const, error: "Client not found." };
 
     await db
       .update(clients)
@@ -288,21 +292,80 @@ export const setClientContactsFn = createServerFn({ method: "POST" })
 
 const accountItemSchema = z.object({
   accountName: z.string().min(1),
+  accountCode: z.string().optional(),
   isPrimaryAccount: z.boolean().optional(),
   isInScope: z.boolean().optional(),
+  accountStatus: z.enum(["Active", "Inactive"]).optional(),
+  // Legal & billing
   accountLegalStructure: z.string().optional(),
+  billingEntity: z.string().optional(),
+  currency: z.string().optional(),
+  taxRegistrationNumber: z.string().optional(),
+  // Address
   addressLine1: z.string().optional(),
   addressLine2: z.string().optional(),
   country: z.string().optional(),
   stateOrRegion: z.string().optional(),
   city: z.string().optional(),
   zipOrPinCode: z.string().optional(),
+  deliveryLocation: z.string().optional(),
+  // Industry
   industryCode: z.string().optional(),
+  subIndustry: z.string().optional(),
+  businessUnitMapping: z.string().optional(),
+  // Financial
   revenueLast1Year: z.string().optional(),
   employeeSize: z.string().optional(),
   website: z.string().optional(),
-  taxRegistrationNumber: z.string().optional(),
+  // Contact
+  contactName: z.string().optional(),
+  contactEmail: z.string().optional(),
+  contactPhone: z.string().optional(),
+  // Notes
+  notes: z.string().optional(),
 });
+
+export const getClientAccountsFn = createServerFn({ method: "GET" })
+  .validator(z.object({ clientId: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const rows = await db
+      .select()
+      .from(clientAccounts)
+      .where(eq(clientAccounts.clientId, data.clientId));
+    return rows.sort((a, b) => a.sortOrder - b.sortOrder).map((row) => ({
+      id: row.id,
+      clientId: row.clientId,
+      accountName: row.accountName,
+      accountCode: row.accountCode ?? null,
+      isPrimaryAccount: row.isPrimaryAccount,
+      isInScope: row.isInScope,
+      accountStatus: row.accountStatus ?? "Active",
+      accountLegalStructure: row.accountLegalStructure ?? null,
+      billingEntity: row.billingEntity ?? null,
+      currency: row.currency ?? null,
+      taxRegistrationNumber: row.taxRegistrationNumber ?? null,
+      addressLine1: row.addressLine1 ?? null,
+      addressLine2: row.addressLine2 ?? null,
+      country: row.country ?? null,
+      stateOrRegion: row.stateOrRegion ?? null,
+      city: row.city ?? null,
+      zipOrPinCode: row.zipOrPinCode ?? null,
+      deliveryLocation: row.deliveryLocation ?? null,
+      industryCode: row.industryCode ?? null,
+      subIndustry: row.subIndustry ?? null,
+      businessUnitMapping: row.businessUnitMapping ?? null,
+      revenueLast1Year: row.revenueLast1Year ?? null,
+      employeeSize: row.employeeSize ?? null,
+      website: row.website ?? null,
+      contactName: row.contactName ?? null,
+      contactEmail: row.contactEmail ?? null,
+      contactPhone: row.contactPhone ?? null,
+      notes: row.notes ?? null,
+      sortOrder: row.sortOrder,
+      createdAt: row.createdAt.toISOString().slice(0, 10),
+      updatedAt: row.updatedAt.toISOString().slice(0, 10),
+    }));
+  });
 
 export const setClientAccountsFn = createServerFn({ method: "POST" })
   .validator(
@@ -315,6 +378,12 @@ export const setClientAccountsFn = createServerFn({ method: "POST" })
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
 
+    // Validate exactly one primary
+    const primaryCount = data.accounts.filter((a) => a.isPrimaryAccount).length;
+    if (primaryCount !== 1) {
+      return { ok: false as const, error: "Exactly one account must be marked as Primary." };
+    }
+
     await db.delete(clientAccounts).where(eq(clientAccounts.clientId, data.clientId));
 
     for (let i = 0; i < data.accounts.length; i++) {
@@ -323,20 +392,31 @@ export const setClientAccountsFn = createServerFn({ method: "POST" })
         id: generateId("acc"),
         clientId: data.clientId,
         accountName: acc.accountName.trim(),
+        accountCode: acc.accountCode?.trim() || null,
         isPrimaryAccount: acc.isPrimaryAccount ?? (i === 0),
         isInScope: acc.isInScope ?? true,
-        accountLegalStructure: acc.accountLegalStructure || null,
+        accountStatus: acc.accountStatus ?? "Active",
+        accountLegalStructure: acc.accountLegalStructure?.trim() || null,
+        billingEntity: acc.billingEntity || null,
+        currency: acc.currency || null,
+        taxRegistrationNumber: acc.taxRegistrationNumber?.trim() || null,
         addressLine1: acc.addressLine1?.trim() || null,
         addressLine2: acc.addressLine2?.trim() || null,
         country: acc.country?.trim() || null,
         stateOrRegion: acc.stateOrRegion?.trim() || null,
         city: acc.city?.trim() || null,
         zipOrPinCode: acc.zipOrPinCode?.trim() || null,
+        deliveryLocation: acc.deliveryLocation?.trim() || null,
         industryCode: acc.industryCode || null,
+        subIndustry: acc.subIndustry?.trim() || null,
+        businessUnitMapping: acc.businessUnitMapping || null,
         revenueLast1Year: acc.revenueLast1Year || null,
         employeeSize: acc.employeeSize || null,
         website: acc.website?.trim() || null,
-        taxRegistrationNumber: acc.taxRegistrationNumber?.trim() || null,
+        contactName: acc.contactName?.trim() || null,
+        contactEmail: acc.contactEmail?.trim() || null,
+        contactPhone: acc.contactPhone?.trim() || null,
+        notes: acc.notes?.trim() || null,
         sortOrder: i + 1,
       });
     }
@@ -349,6 +429,7 @@ export const setClientAccountsFn = createServerFn({ method: "POST" })
 
     return { ok: true as const };
   });
+
 
 // --- Section 6: Client Software Stack ---
 
@@ -467,13 +548,13 @@ export const assignClientTeamOwnershipFn = createServerFn({ method: "POST" })
   .validator(
     z.object({
       id: z.string().min(1),
-      businessUnitManagerId: z.string().min(1),
+      businessUnitManagerId: employeeIdOrNa,
       teamLeadId: z.string().min(1),
       assistantTeamLeadId: employeeIdOrNa,
       backupBusinessUnitManagerId: employeeIdOrNa,
       backupTeamLeadId: employeeIdOrNa,
       backupAssistantTeamLeadId: employeeIdOrNa,
-      numberOfFinanceAnalysts: z.number().int().min(1).max(5),
+      numberOfFinanceAnalysts: z.number().int().min(1).max(5).optional().default(1),
       financeAnalyst1Id: employeeIdOrNa,
       backupFinanceAnalyst1Id: employeeIdOrNa,
       financeAnalyst2Id: employeeIdOrNa,
@@ -492,6 +573,9 @@ export const assignClientTeamOwnershipFn = createServerFn({ method: "POST" })
 
     const target = await findClientById(data.id);
     if (!target) return { ok: false as const, error: "Client not found." };
+    if (!canManageTeam(user, target)) {
+      return { ok: false as const, error: "You are not authorized to manage team for this client." };
+    }
 
     await db
       .update(clients)

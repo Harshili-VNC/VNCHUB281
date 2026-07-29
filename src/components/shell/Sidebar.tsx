@@ -151,16 +151,13 @@ function accessiblePages(person: {
   }
   if (person.isBusinessUnitHead) return FULL_ACCESS;
 
-  if (person.departmentFunction === "Finance") {
+  if (person.departmentFunction === "Finance" || person.departmentFunction === "Marketing") {
     ["/clients", "/client-approvals", "/client-change-requests", "/import-center", "/import-history", "/export-center", "/reports"].forEach(
       (p) => pages.add(p),
     );
   }
   if (person.departmentFunction === "HR") {
     ["/users", "/teams", "/employee-history", "/recruitment", "/reports"].forEach((p) => pages.add(p));
-  }
-  if (person.departmentFunction === "Marketing") {
-    pages.add("/reports");
   }
   if (person.departmentFunction === "Operations" || person.departmentFunction === "IT / Systems") {
     ["/clients", "/teams", "/recruitment", "/reports"].forEach((p) => pages.add(p));
@@ -208,7 +205,7 @@ export function Sidebar() {
     >
       <div className="h-16 flex items-center gap-3 px-4 border-b border-sidebar-border">
         <img
-          src="/vnc-global-logo.svg"
+          src="/vnc-logo.png"
           alt="VNC logo"
           className="h-9 w-9 shrink-0 rounded-full shadow-sm ring-1 ring-border"
         />

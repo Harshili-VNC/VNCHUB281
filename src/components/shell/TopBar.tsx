@@ -96,7 +96,7 @@ export function TopBar() {
   return (
     <header className="h-16 shrink-0 flex items-center border-b border-border bg-background/75 backdrop-blur-xl sticky top-0 z-30">
       <button className="h-full flex items-center gap-2.5 px-6 border-r border-border hover:bg-surface-2 transition">
-        <img src="/vnc-global-logo.svg" alt="VNC logo" className="h-6 w-6 rounded-full" />
+        <img src="/vnc-logo.png" alt="VNC logo" className="h-6 w-6 rounded-full" />
         <span className="text-[13px] font-medium text-foreground">VNC · Enterprise</span>
         <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
       </button>

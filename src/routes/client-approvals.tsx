@@ -27,17 +27,16 @@ export const Route = createFileRoute("/client-approvals")({
 
 type Decision = "Approved" | "Rejected" | "Sent Back for Correction";
 
+import { canApproveClient } from "@/lib/client-visibility";
+
 function ClientApprovalsPage() {
   const { user } = useAuth();
-  const { clients, decideClientApproval } = useWorkspace();
+  const { clients, decideClientApproval, openClient360 } = useWorkspace();
   const [action, setAction] = useState<{ client: ClientRecord; decision: Decision } | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Client Master spec v1.0, Section 3: only the BU Head (the "BU Approver
-  // Role") can review/approve/reject/send back. Everyone else with sidebar
-  // access to this page can view the queue only.
-  const canApprove = user?.isBusinessUnitHead ?? false;
+  const canApprove = canApproveClient(user);
   const noteRequired = action?.decision !== "Approved";
   const noteMissing = noteRequired && !note.trim();
 
@@ -109,7 +108,15 @@ function ClientApprovalsPage() {
                 {pending.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.code ?? "—"}</TableCell>
-                    <TableCell>{c.name}</TableCell>
+                    <TableCell>
+                      <button
+                        type="button"
+                        onClick={() => openClient360(c)}
+                        className="font-semibold text-foreground hover:text-accent hover:underline text-left cursor-pointer"
+                      >
+                        {c.name}
+                      </button>
+                    </TableCell>
                     <TableCell>{c.businessUnit ?? "—"}</TableCell>
                     <TableCell>{c.billingEntity ?? "—"}</TableCell>
                     <TableCell>{c.contractType ?? "—"}</TableCell>

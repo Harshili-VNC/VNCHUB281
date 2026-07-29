@@ -16,8 +16,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const { user, hydrated, signIn } = useAuth();
-  const [email, setEmail] = useState("manager@vnc.com");
-  const [password, setPassword] = useState("manager123");
+  const [email, setEmail] = useState("ceo@vnc.com");
+  const [password, setPassword] = useState("ceo123");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
@@ -50,7 +50,7 @@ function LoginPage() {
         <div className="relative flex flex-col justify-between max-w-xl">
           <div className="flex items-center gap-3">
             <img
-              src="/vnc-global-logo.svg"
+              src="/vnc-logo.png"
               alt="VNC logo"
               className="h-10 w-10 rounded-full bg-white/10"
             />
@@ -79,7 +79,7 @@ function LoginPage() {
       <section className="flex items-center justify-center px-6 py-10 sm:px-10">
         <div className="w-full max-w-[420px]">
           <div className="mb-10 flex items-center gap-3 lg:hidden">
-            <img src="/vnc-global-logo.svg" alt="VNC logo" className="h-10 w-10 rounded-full" />
+            <img src="/vnc-logo.png" alt="VNC logo" className="h-10 w-10 rounded-full" />
             <div>
               <div className="text-[15px] font-semibold">VNC Hub</div>
               <div className="text-xs text-muted-foreground">Enterprise workspace</div>

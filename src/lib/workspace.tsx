@@ -14,7 +14,10 @@ import {
   addClientChangeRequestFn,
   applyClientChangeRequestFn,
   assignClientTeamOwnershipFn,
+  setClientAccountsFn,
+  getClientAccountsFn,
 } from "../api/clients.mutations";
+import type { ClientAccount } from "./documents";
 import { runImportFn } from "../api/imports.mutations";
 import { createExportFn } from "../api/exports.mutations";
 import type { Person } from "./hierarchy";
@@ -177,15 +180,44 @@ type ClientInput = {
   nonActiveOtherReasonText?: string;
 };
 
+type AccountItem = {
+  accountName: string;
+  accountCode?: string;
+  isPrimaryAccount?: boolean;
+  isInScope?: boolean;
+  accountStatus?: "Active" | "Inactive";
+  accountLegalStructure?: string;
+  billingEntity?: string;
+  currency?: string;
+  taxRegistrationNumber?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  country?: string;
+  stateOrRegion?: string;
+  city?: string;
+  zipOrPinCode?: string;
+  deliveryLocation?: string;
+  industryCode?: string;
+  subIndustry?: string;
+  businessUnitMapping?: string;
+  revenueLast1Year?: string;
+  employeeSize?: string;
+  website?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  notes?: string;
+};
+
 type TeamOwnershipInput = {
   id: string;
-  businessUnitManagerId: string;
+  businessUnitManagerId?: string;
   teamLeadId: string;
   assistantTeamLeadId?: string;
   backupBusinessUnitManagerId?: string;
   backupTeamLeadId?: string;
   backupAssistantTeamLeadId?: string;
-  numberOfFinanceAnalysts: number;
+  numberOfFinanceAnalysts?: number;
   financeAnalyst1Id?: string;
   backupFinanceAnalyst1Id?: string;
   financeAnalyst2Id?: string;
@@ -216,6 +248,9 @@ type ImportResult =
   | { ok: false; error: string };
 type ExportResult = { ok: true; csv: string; rowCount: number } | { ok: false; error: string };
 
+import { useState } from "react";
+import { Client360Dialog } from "@/components/shared/Client360Dialog";
+
 type WorkspaceContextValue = {
   tasks: Task[];
   leaveRequests: LeaveRequest[];
@@ -226,6 +261,9 @@ type WorkspaceContextValue = {
   importJobs: ImportJob[];
   exportJobs: ExportJob[];
   hydrated: boolean;
+  selected360Client: ClientRecord | null;
+  openClient360: (clientOrId: string | ClientRecord) => void;
+  closeClient360: () => void;
   addTask: (input: AddTaskInput) => Promise<Result>;
   setTaskStatus: (id: string, status: TaskStatus) => Promise<Result>;
   requestLeave: (input: RequestLeaveInput) => Promise<Result>;
@@ -243,6 +281,8 @@ type WorkspaceContextValue = {
   addClientChangeRequest: (input: ChangeRequestInput) => Promise<Result>;
   applyClientChangeRequest: (id: string) => Promise<Result>;
   assignClientTeamOwnership: (input: TeamOwnershipInput) => Promise<Result>;
+  setClientAccounts: (clientId: string, accounts: AccountItem[]) => Promise<Result>;
+  getClientAccounts: (clientId: string) => Promise<ClientAccount[]>;
   runImport: (input: {
     module: ImportExportModule;
     fileName: string;
@@ -255,6 +295,7 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const [selected360Client, setSelected360Client] = useState<ClientRecord | null>(null);
 
   const bootstrapQuery = useQuery({
     queryKey: BOOTSTRAP_QUERY_KEY,
@@ -270,6 +311,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const importJobs = bootstrapQuery.data?.importJobs ?? [];
   const exportJobs = bootstrapQuery.data?.exportJobs ?? [];
   const hydrated = bootstrapQuery.isFetched;
+
+  function openClient360(clientOrId: string | ClientRecord) {
+    if (typeof clientOrId === "string") {
+      const match = clients.find((c) => c.id === clientOrId || c.name.toLowerCase() === clientOrId.toLowerCase());
+      if (match) setSelected360Client(match);
+    } else {
+      setSelected360Client(clientOrId);
+    }
+  }
+
+  function closeClient360() {
+    setSelected360Client(null);
+  }
 
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: BOOTSTRAP_QUERY_KEY });
@@ -311,7 +365,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return result;
   }
 
-  async function addClient(input: ClientInput) {
+  async function addClient(
+    input: ClientInput,
+  ): Promise<Result & { id?: string; code?: string }> {
     const result = await addClientFn({ data: input });
     if (result.ok) await refresh();
     return result;
@@ -357,6 +413,20 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return result;
   }
 
+  async function setClientAccounts(clientId: string, accounts: AccountItem[]): Promise<Result> {
+    const result = await setClientAccountsFn({ data: { clientId, accounts } });
+    if (result.ok) await refresh();
+    return result;
+  }
+
+  async function getClientAccounts(clientId: string): Promise<ClientAccount[]> {
+    try {
+      return await getClientAccountsFn({ data: { clientId } });
+    } catch {
+      return [];
+    }
+  }
+
   async function runImport(input: {
     module: ImportExportModule;
     fileName: string;
@@ -367,8 +437,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return result;
   }
 
-  async function createExport(input: { module: ImportExportModule }): Promise<ExportResult> {
-    const result = await createExportFn({ data: { module: input.module, format: "CSV" } });
+  async function createExport(input: {
+    module: ImportExportModule;
+  }): Promise<ExportResult> {
+    const result = await createExportFn({ data: input });
     if (result.ok) await refresh();
     return result;
   }
@@ -383,6 +455,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     importJobs,
     exportJobs,
     hydrated,
+    selected360Client,
+    openClient360,
+    closeClient360,
     addTask,
     setTaskStatus,
     requestLeave,
@@ -396,11 +471,22 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     addClientChangeRequest,
     applyClientChangeRequest,
     assignClientTeamOwnership,
+    setClientAccounts,
+    getClientAccounts,
     runImport,
     createExport,
   };
 
-  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
+  return (
+    <WorkspaceContext.Provider value={value}>
+      {children}
+      <Client360Dialog
+        client={selected360Client}
+        open={Boolean(selected360Client)}
+        onClose={closeClient360}
+      />
+    </WorkspaceContext.Provider>
+  );
 }
 
 export function useWorkspace() {

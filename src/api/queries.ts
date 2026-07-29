@@ -32,6 +32,7 @@ import {
   loadEmployeeCompensationHistory,
 } from "./repo";
 import type { Person } from "../lib/hierarchy";
+import { filterClientsByRole, canViewSensitiveClientData } from "../lib/client-visibility";
 
 export const getBootstrapFn = createServerFn({ method: "GET" }).handler(async () => {
   try {
@@ -40,7 +41,7 @@ export const getBootstrapFn = createServerFn({ method: "GET" }).handler(async ()
       people,
       tasks,
       leaveRequests,
-      clients,
+      rawClients,
       documents,
       clientChangeRequests,
       employeeHistory,
@@ -62,12 +63,26 @@ export const getBootstrapFn = createServerFn({ method: "GET" }).handler(async ()
     const match = personId ? (people.find((p: Person) => p.id === personId) ?? null) : null;
     const user = match && match.status === "active" ? match : null;
 
+    // Backend filtering of clients by user Business Unit role
+    let visibleClients = filterClientsByRole(rawClients, user);
+
+    // Backend sanitization of sensitive commercial data if user is not authorized
+    if (user && !canViewSensitiveClientData(user)) {
+      visibleClients = visibleClients.map((c) => ({
+        ...c,
+        billingNotes: undefined,
+        paymentTerms: undefined,
+        commercialNotes: undefined,
+        contractCopyLink: undefined,
+      }));
+    }
+
     return {
       user,
       people,
       tasks,
       leaveRequests,
-      clients,
+      clients: visibleClients,
       documents,
       clientChangeRequests,
       employeeHistory,

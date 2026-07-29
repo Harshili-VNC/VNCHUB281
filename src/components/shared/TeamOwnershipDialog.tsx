@@ -1,13 +1,14 @@
-// Client Master spec v1.0, Section 9: Team Ownership Structure.
-// Lets the BU Head / Finance / Admin assign delivery ownership for a client
-// once it's Approved: Business Unit Manager, Team Lead, Assistant Team Lead
-// (+ optional backups for each), and 1-5 Finance Analysts (+ optional backups).
+// Client Master spec v1.0 & Team Ownership Workflow Enhancement.
+// 1. BU Head assigns ONLY Team Lead (Mandatory).
+// 2. Assigned Team Lead builds the delivery team (Assistants, Analysts, Backups).
+// 3. Admin / CEO / MD can perform all actions as an override.
 
 import { Fragment, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useWorkspace } from "@/lib/workspace";
 import type { ClientRecord } from "@/lib/workspace";
-import type { Person } from "@/lib/hierarchy";
+import { useAuth, type Person } from "@/lib/auth";
+import { isSuperUser, isBUHead } from "@/lib/client-visibility";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -55,16 +56,18 @@ function EmployeeSelect({
   onChange,
   allowNa,
   placeholder,
+  disabled,
 }: {
   people: Person[];
   value: string;
   onChange: (v: string) => void;
   allowNa?: boolean;
   placeholder: string;
+  disabled?: boolean;
 }) {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger>
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger className={disabled ? "bg-surface-2 opacity-80 cursor-not-allowed" : ""}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
@@ -90,9 +93,17 @@ export function TeamOwnershipDialog({
   people: Person[];
   onClose: () => void;
 }) {
+  const { user } = useAuth();
   const { assignClientTeamOwnership } = useWorkspace();
   const [form, setForm] = useState(emptyForm());
   const [saving, setSaving] = useState(false);
+
+  const isSuper = isSuperUser(user);
+  const isBuHeadRole = isBUHead(user) && !isSuper;
+  const isAssignedTL = Boolean(client?.teamLeadId && user?.id === client.teamLeadId);
+
+  // BU Head assigns ONLY Team Lead. Assigned TL or Superuser builds full team.
+  const isBuHeadAssigningTLOnly = isBuHeadRole && !isAssignedTL;
 
   useEffect(() => {
     if (!client) return;
@@ -128,15 +139,25 @@ export function TeamOwnershipDialog({
 
   async function save() {
     if (!client) return;
-    if (!form.businessUnitManagerId || !form.teamLeadId) {
-      toast.error("Business Unit Manager and Team Lead are required.");
+    if (!form.teamLeadId || form.teamLeadId === NA) {
+      toast.error("Team Lead assignment is required.");
       return;
     }
+    const clean = (v?: string) => (!v || v.trim() === "" || v === NA ? undefined : v.trim());
+
+    if (!isBuHeadAssigningTLOnly) {
+      if (!clean(form.businessUnitManagerId)) {
+        toast.error("Business Unit Manager is required when managing the delivery team.");
+        return;
+      }
+    }
+
     setSaving(true);
-    const clean = (v: string) => (v === NA ? undefined : v);
+    const isNewTlAssignment = client.teamLeadId !== form.teamLeadId;
+
     const result = await assignClientTeamOwnership({
       id: client.id,
-      businessUnitManagerId: form.businessUnitManagerId,
+      businessUnitManagerId: clean(form.businessUnitManagerId),
       teamLeadId: form.teamLeadId,
       assistantTeamLeadId: clean(form.assistantTeamLeadId),
       backupBusinessUnitManagerId: clean(form.backupBusinessUnitManagerId),
@@ -159,7 +180,17 @@ export function TeamOwnershipDialog({
       toast.error(result.error);
       return;
     }
-    toast.success("Team ownership updated");
+
+    if (isNewTlAssignment) {
+      const assignedPerson = people.find((p) => p.id === form.teamLeadId);
+      const tlName = assignedPerson ? assignedPerson.name : "Team Lead";
+      toast.success(
+        `You have been assigned as Team Lead for Client ${client.name}. Please complete the delivery team assignment. (${tlName})`,
+        { duration: 6000 },
+      );
+    } else {
+      toast.success(isBuHeadAssigningTLOnly ? "Team Lead assigned successfully." : "Delivery team structure updated.");
+    }
     onClose();
   }
 
@@ -167,124 +198,159 @@ export function TeamOwnershipDialog({
     <Dialog open={!!client} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Team ownership — {client.name}</DialogTitle>
+          <DialogTitle>
+            {isBuHeadAssigningTLOnly
+              ? `Assign Team Lead — ${client.name}`
+              : `Build Delivery Team — ${client.name}`}
+          </DialogTitle>
           <DialogDescription>
-            Business Unit Manager and Team Lead are required. Everything else is optional.
+            {isBuHeadAssigningTLOnly
+              ? "Business Unit Head Responsibility: Assign the mandatory Team Lead for this client. The assigned Team Lead will build the remaining delivery team."
+              : "Team Lead Responsibility: Assign and manage the delivery team members for this client."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Business Unit Manager</Label>
-            <EmployeeSelect
-              people={people}
-              value={form.businessUnitManagerId}
-              onChange={(v) => set("businessUnitManagerId", v)}
-              placeholder="Select employee"
-            />
+        {isBuHeadAssigningTLOnly ? (
+          /* BU Head View: Assigns ONLY Team Lead and Backup TL */
+          <div className="grid grid-cols-2 gap-3 py-2">
+            <div className="col-span-2">
+              <Label>Team Lead <span className="text-rose-500 font-bold">*</span></Label>
+              <EmployeeSelect
+                people={people}
+                value={form.teamLeadId}
+                onChange={(v) => set("teamLeadId", v)}
+                placeholder="Select mandatory Team Lead"
+              />
+            </div>
+            <div className="col-span-2">
+              <Label>Backup for Team Lead (Optional)</Label>
+              <EmployeeSelect
+                people={people}
+                value={form.backupTeamLeadId}
+                onChange={(v) => set("backupTeamLeadId", v)}
+                allowNa
+                placeholder="NA"
+              />
+            </div>
           </div>
-          <div>
-            <Label>Backup for Business Unit Manager</Label>
-            <EmployeeSelect
-              people={people}
-              value={form.backupBusinessUnitManagerId}
-              onChange={(v) => set("backupBusinessUnitManagerId", v)}
-              allowNa
-              placeholder="NA"
-            />
+        ) : (
+          /* Assigned Team Lead / Superuser View: Builds full delivery team */
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Team Lead <span className="text-rose-500 font-bold">*</span></Label>
+              <EmployeeSelect
+                people={people}
+                value={form.teamLeadId}
+                onChange={(v) => set("teamLeadId", v)}
+                placeholder="Select employee"
+                disabled={isAssignedTL && !isSuper}
+              />
+            </div>
+            <div>
+              <Label>Backup for Team Lead</Label>
+              <EmployeeSelect
+                people={people}
+                value={form.backupTeamLeadId}
+                onChange={(v) => set("backupTeamLeadId", v)}
+                allowNa
+                placeholder="NA"
+              />
+            </div>
+            <div>
+              <Label>Business Unit Manager</Label>
+              <EmployeeSelect
+                people={people}
+                value={form.businessUnitManagerId}
+                onChange={(v) => set("businessUnitManagerId", v)}
+                allowNa
+                placeholder="Select employee"
+              />
+            </div>
+            <div>
+              <Label>Backup for Business Unit Manager</Label>
+              <EmployeeSelect
+                people={people}
+                value={form.backupBusinessUnitManagerId}
+                onChange={(v) => set("backupBusinessUnitManagerId", v)}
+                allowNa
+                placeholder="NA"
+              />
+            </div>
+            <div>
+              <Label>Assistant Team Lead</Label>
+              <EmployeeSelect
+                people={people}
+                value={form.assistantTeamLeadId}
+                onChange={(v) => set("assistantTeamLeadId", v)}
+                allowNa
+                placeholder="NA"
+              />
+            </div>
+            <div>
+              <Label>Backup for Assistant Team Lead</Label>
+              <EmployeeSelect
+                people={people}
+                value={form.backupAssistantTeamLeadId}
+                onChange={(v) => set("backupAssistantTeamLeadId", v)}
+                allowNa
+                placeholder="NA"
+              />
+            </div>
+            <div className="col-span-2">
+              <Label>Number of Finance Analysts</Label>
+              <Select
+                value={form.numberOfFinanceAnalysts}
+                onValueChange={(v) => set("numberOfFinanceAnalysts", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {n} Analyst(s)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {analystSlots.map((n) => (
+              <Fragment key={n}>
+                <div>
+                  <Label>Finance Analyst {n}</Label>
+                  <EmployeeSelect
+                    people={people}
+                    value={form[`financeAnalyst${n}Id` as const]}
+                    onChange={(v) => set(`financeAnalyst${n}Id` as const, v)}
+                    allowNa
+                    placeholder="NA"
+                  />
+                </div>
+                <div>
+                  <Label>Backup for Finance Analyst {n}</Label>
+                  <EmployeeSelect
+                    people={people}
+                    value={form[`backupFinanceAnalyst${n}Id` as const]}
+                    onChange={(v) => set(`backupFinanceAnalyst${n}Id` as const, v)}
+                    allowNa
+                    placeholder="NA"
+                  />
+                </div>
+              </Fragment>
+            ))}
           </div>
-          <div>
-            <Label>Team Lead</Label>
-            <EmployeeSelect
-              people={people}
-              value={form.teamLeadId}
-              onChange={(v) => set("teamLeadId", v)}
-              placeholder="Select employee"
-            />
-          </div>
-          <div>
-            <Label>Backup for Team Lead</Label>
-            <EmployeeSelect
-              people={people}
-              value={form.backupTeamLeadId}
-              onChange={(v) => set("backupTeamLeadId", v)}
-              allowNa
-              placeholder="NA"
-            />
-          </div>
-          <div>
-            <Label>Assistant Team Lead</Label>
-            <EmployeeSelect
-              people={people}
-              value={form.assistantTeamLeadId}
-              onChange={(v) => set("assistantTeamLeadId", v)}
-              allowNa
-              placeholder="NA"
-            />
-          </div>
-          <div>
-            <Label>Backup for Assistant Team Lead</Label>
-            <EmployeeSelect
-              people={people}
-              value={form.backupAssistantTeamLeadId}
-              onChange={(v) => set("backupAssistantTeamLeadId", v)}
-              allowNa
-              placeholder="NA"
-            />
-          </div>
-          <div className="col-span-2">
-            <Label>Number of Finance Analysts</Label>
-            <Select
-              value={form.numberOfFinanceAnalysts}
-              onValueChange={(v) => set("numberOfFinanceAnalysts", v)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <SelectItem key={n} value={String(n)}>
-                    {n}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {analystSlots.map((n) => (
-            <Fragment key={n}>
-              <div>
-                <Label>Finance Analyst {n}</Label>
-                <EmployeeSelect
-                  people={people}
-                  value={form[`financeAnalyst${n}Id` as const]}
-                  onChange={(v) => set(`financeAnalyst${n}Id` as const, v)}
-                  allowNa
-                  placeholder="NA"
-                />
-              </div>
-              <div>
-                <Label>Backup for Finance Analyst {n}</Label>
-                <EmployeeSelect
-                  people={people}
-                  value={form[`backupFinanceAnalyst${n}Id` as const]}
-                  onChange={(v) => set(`backupFinanceAnalyst${n}Id` as const, v)}
-                  allowNa
-                  placeholder="NA"
-                />
-              </div>
-            </Fragment>
-          ))}
-        </div>
+        )}
 
-        <DialogFooter>
+        <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={save} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
+            {saving ? "Saving…" : isBuHeadAssigningTLOnly ? "Assign Team Lead" : "Save Delivery Team"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+

@@ -568,21 +568,39 @@ export const clientContacts = pgTable("client_contacts", {
 export const clientAccounts = pgTable("client_accounts", {
   id: text("id").primaryKey(),
   clientId: text("client_id").notNull(),
+  // Core identity
   accountName: text("account_name").notNull(),
+  accountCode: text("account_code"),
   isPrimaryAccount: boolean("is_primary_account").notNull().default(false),
   isInScope: boolean("is_in_scope").notNull().default(true),
+  accountStatus: text("account_status").default("Active"), // "Active" | "Inactive"
+  // Legal & billing
   accountLegalStructure: text("account_legal_structure"),
+  billingEntity: text("billing_entity"),
+  currency: text("currency"),
+  taxRegistrationNumber: text("tax_registration_number"), // GST / Tax Number
+  // Address
   addressLine1: text("address_line1"),
   addressLine2: text("address_line2"),
   country: text("country"),
   stateOrRegion: text("state_or_region"),
   city: text("city"),
   zipOrPinCode: text("zip_or_pin_code"),
+  deliveryLocation: text("delivery_location"),
+  // Industry classification
   industryCode: text("industry_code"),
+  subIndustry: text("sub_industry"),
+  businessUnitMapping: text("business_unit_mapping"),
+  // Financial metadata
   revenueLast1Year: text("revenue_last_1_year"),
   employeeSize: text("employee_size"),
   website: text("website"),
-  taxRegistrationNumber: text("tax_registration_number"),
+  // Account contact
+  contactName: text("contact_name"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  // Notes
+  notes: text("notes"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

@@ -29,7 +29,7 @@ export const Route = createFileRoute("/client-change-requests")({
 const FIELDS = ["Business Unit", "Billing Entity", "Client Status"] as const;
 
 function ChangeRequestsPage() {
-  const { clients, clientChangeRequests, addClientChangeRequest, applyClientChangeRequest } =
+  const { clients, clientChangeRequests, addClientChangeRequest, applyClientChangeRequest, openClient360 } =
     useWorkspace();
   const [showNew, setShowNew] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -115,7 +115,13 @@ function ChangeRequestsPage() {
                   <TableRow key={r.id}>
                     <TableCell>
                       <div className="font-medium">{clientCode(r.clientId)}</div>
-                      <div className="text-xs text-muted-foreground">{clientName(r.clientId)}</div>
+                      <button
+                        type="button"
+                        onClick={() => openClient360(r.clientId)}
+                        className="text-xs font-semibold text-foreground hover:text-accent hover:underline text-left cursor-pointer"
+                      >
+                        {clientName(r.clientId)}
+                      </button>
                     </TableCell>
                     <TableCell>{r.field}</TableCell>
                     <TableCell>{r.previousValue || "—"}</TableCell>

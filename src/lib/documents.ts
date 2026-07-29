@@ -35,21 +35,39 @@ export type ClientContact = {
 export type ClientAccount = {
   id: string;
   clientId: string;
+  // Core identity
   accountName: string;
+  accountCode: string | null;
   isPrimaryAccount: boolean;
   isInScope: boolean;
+  accountStatus: string | null; // "Active" | "Inactive"
+  // Legal & billing
   accountLegalStructure: string | null;
+  billingEntity: string | null;
+  currency: string | null;
+  taxRegistrationNumber: string | null; // GST / Tax Number
+  // Address
   addressLine1: string | null;
   addressLine2: string | null;
   country: string | null;
   stateOrRegion: string | null;
   city: string | null;
   zipOrPinCode: string | null;
+  deliveryLocation: string | null;
+  // Industry
   industryCode: string | null;
+  subIndustry: string | null;
+  businessUnitMapping: string | null;
+  // Financial metadata
   revenueLast1Year: string | null;
   employeeSize: string | null;
   website: string | null;
-  taxRegistrationNumber: string | null;
+  // Account contact
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  // Notes
+  notes: string | null;
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
@@ -443,7 +461,7 @@ export type DocumentRecord = {
 // Static reference lists
 // ---------------------------------------------------------------------------
 
-export const businessUnits = ["EFA", "SCA", "ANZA", "MBS"];
+export const businessUnits = ["ESA", "SCA", "ANZA", "MBS"];
 export const billingEntities = ["VNC-GL", "VNC-AU", "VNC-IN"];
 export const clientCurrencies = ["USD", "AUD", "GBP", "INR"];
 export const contractTypes = ["Recurring", "One-off"];

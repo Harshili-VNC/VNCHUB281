@@ -114,22 +114,65 @@ export function getManagerChain(people: Person[], personId: string): Person[] {
   return chain;
 }
 
+export type AppRole =
+  | "CEO"
+  | "Managing Director"
+  | "Business Unit Head"
+  | "Marketing Head"
+  | "Finance Head"
+  | "Team Lead"
+  | "Assistant Team Lead"
+  | "Human Resources"
+  | "Employee"
+  | "Admin";
+
+export const appRoles: AppRole[] = [
+  "CEO",
+  "Managing Director",
+  "Business Unit Head",
+  "Marketing Head",
+  "Finance Head",
+  "Team Lead",
+  "Assistant Team Lead",
+  "Human Resources",
+  "Employee",
+  "Admin",
+];
+
 export function isTopLeadership(person: Person): boolean {
-  return person.departmentFunction === "Leadership";
+  const desig = (person.designation ?? "").toLowerCase();
+  return (
+    person.departmentFunction === "Leadership" ||
+    desig === "ceo" ||
+    desig === "managing director"
+  );
 }
 
 export function canAddPeople(actor: Person): boolean {
+  const desig = (actor.designation ?? "").toLowerCase();
   return (
     actor.departmentFunction === "Leadership" ||
     actor.departmentFunction === "Admin" ||
     actor.departmentFunction === "HR" ||
     actor.isBusinessUnitHead ||
-    actor.isTeamLead
+    actor.isTeamLead ||
+    desig === "ceo" ||
+    desig === "managing director" ||
+    desig === "human resources" ||
+    desig === "admin"
   );
 }
 
 export function getVisiblePeople(people: Person[], actor: Person): Person[] {
-  if (actor.departmentFunction === "Leadership" || actor.departmentFunction === "Admin") {
+  const desig = (actor.designation ?? "").toLowerCase();
+  if (
+    actor.departmentFunction === "Leadership" ||
+    actor.departmentFunction === "Admin" ||
+    actor.departmentFunction === "HR" ||
+    desig === "ceo" ||
+    desig === "managing director" ||
+    desig === "admin"
+  ) {
     return people;
   }
   return getDescendants(people, actor.id);

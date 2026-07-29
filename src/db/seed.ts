@@ -18,18 +18,15 @@ import type { DepartmentFunction, PersonStatus } from "../lib/hierarchy";
 // designationLevel/salary/DOB deterministically.
 type SeedTier =
   | "CEO"
-  | "MD"
-  | "Founder"
-  | "Admin"
-  | "Finance"
-  | "BUHead"
-  | "HR"
-  | "Marketing"
-  | "ProjectManager"
-  | "TeamLeader"
-  | "AssistantTeamLeader"
-  | "Analyst"
-  | "Employee";
+  | "ManagingDirector"
+  | "BusinessUnitHead"
+  | "MarketingHead"
+  | "FinanceHead"
+  | "TeamLead"
+  | "AssistantTeamLead"
+  | "HumanResources"
+  | "Employee"
+  | "Admin";
 
 type SeedPerson = {
   id: string;
@@ -60,7 +57,7 @@ const seedPeople: SeedPerson[] = [
     id: "md-001",
     name: "Ishaan Kapoor",
     email: "md@vnc.com",
-    tier: "MD",
+    tier: "ManagingDirector",
     department: "Executive Office",
     managerId: null,
     status: "active",
@@ -68,18 +65,7 @@ const seedPeople: SeedPerson[] = [
     password: "md123",
   },
 
-  // --- Founder & Admin ---
-  {
-    id: "founder-001",
-    name: "Devika Chandran",
-    email: "founder@vnc.com",
-    tier: "Founder",
-    department: "Executive Office",
-    managerId: null,
-    status: "active",
-    createdAt: "2024-01-08",
-    password: "founder123",
-  },
+  // --- Admin ---
   {
     id: "admin-001",
     name: "Nikhil Bansal",
@@ -92,411 +78,119 @@ const seedPeople: SeedPerson[] = [
     password: "admin123",
   },
 
-  // --- Department roles (Finance / BU Head / HR / Marketing) ---
+  // --- Department Heads ---
   {
-    id: "finance-001",
+    id: "marketing-head-001",
+    name: "Simran Kaur",
+    email: "marketing.head@vnc.com",
+    tier: "MarketingHead",
+    department: "Marketing",
+    managerId: "ceo-001",
+    status: "active",
+    createdAt: "2024-01-10",
+    password: "marketing123",
+  },
+  {
+    id: "finance-head-001",
     name: "Meher Kulkarni",
-    email: "finance@vnc.com",
-    tier: "Finance",
+    email: "finance.head@vnc.com",
+    tier: "FinanceHead",
     department: "Finance",
-    managerId: "admin-001",
+    managerId: "ceo-001",
     status: "active",
     createdAt: "2024-01-10",
     password: "finance123",
   },
   {
-    id: "buhead-001",
-    name: "Divya Suresh",
-    email: "buhead@vnc.com",
-    tier: "BUHead",
-    department: "Customer Success",
-    managerId: "admin-001",
-    status: "active",
-    createdAt: "2024-01-10",
-    password: "buhead123",
-  },
-  {
     id: "hr-001",
     name: "Kabir Malhotra",
     email: "hr@vnc.com",
-    tier: "HR",
+    tier: "HumanResources",
     department: "People Ops",
     managerId: "admin-001",
     status: "active",
     createdAt: "2024-01-10",
     password: "hr123",
   },
+
+  // --- Exactly Four Business Unit Heads ---
   {
-    id: "marketing-001",
-    name: "Simran Kaur",
-    email: "marketing@vnc.com",
-    tier: "Marketing",
-    department: "Marketing",
-    managerId: "admin-001",
+    id: "buhead-esa",
+    name: "Divya Suresh",
+    email: "buhead.esa@vnc.com",
+    tier: "BusinessUnitHead",
+    department: "ESA Operations",
+    managerId: "ceo-001",
     status: "active",
     createdAt: "2024-01-10",
-    password: "marketing123",
+    password: "buhead123",
+  },
+  {
+    id: "buhead-sca",
+    name: "Rajesh Kumar",
+    email: "buhead.sca@vnc.com",
+    tier: "BusinessUnitHead",
+    department: "SCA Operations",
+    managerId: "ceo-001",
+    status: "active",
+    createdAt: "2024-01-10",
+    password: "buhead123",
+  },
+  {
+    id: "buhead-anza",
+    name: "Sarah Jenkins",
+    email: "buhead.anza@vnc.com",
+    tier: "BusinessUnitHead",
+    department: "ANZA Operations",
+    managerId: "ceo-001",
+    status: "active",
+    createdAt: "2024-01-10",
+    password: "buhead123",
+  },
+  {
+    id: "buhead-mbs",
+    name: "Amit Patel",
+    email: "buhead.mbs@vnc.com",
+    tier: "BusinessUnitHead",
+    department: "MBS Operations",
+    managerId: "ceo-001",
+    status: "active",
+    createdAt: "2024-01-10",
+    password: "buhead123",
   },
 
-  // --- Project Managers ---
-  {
-    id: "manager-001",
-    name: "Harshili Reddy",
-    email: "manager@vnc.com",
-    tier: "ProjectManager",
-    department: "Product",
-    managerId: "admin-001",
-    status: "active",
-    createdAt: "2024-01-10",
-    password: "manager123",
-  },
-  {
-    id: "manager-002",
-    name: "Vikram Nair",
-    email: "vikram.n@vnc.com",
-    tier: "ProjectManager",
-    department: "Engineering",
-    managerId: "admin-001",
-    status: "active",
-    createdAt: "2024-01-10",
-    password: "manager123",
-  },
-  {
-    id: "manager-003",
-    name: "Priya Menon",
-    email: "priya.m@vnc.com",
-    tier: "ProjectManager",
-    department: "Marketing",
-    managerId: "admin-001",
-    status: "active",
-    createdAt: "2024-01-10",
-    password: "manager123",
-  },
-  {
-    id: "manager-004",
-    name: "Rohan Desai",
-    email: "rohan.d@vnc.com",
-    tier: "ProjectManager",
-    department: "Sales",
-    managerId: "admin-001",
-    status: "active",
-    createdAt: "2024-01-10",
-    password: "manager123",
-  },
-  {
-    id: "manager-005",
-    name: "Ananya Iyer",
-    email: "ananya.i@vnc.com",
-    tier: "ProjectManager",
-    department: "Finance",
-    managerId: "admin-001",
-    status: "active",
-    createdAt: "2024-01-10",
-    password: "manager123",
-  },
-  {
-    id: "manager-006",
-    name: "Sanjay Bhatt",
-    email: "sanjay.b@vnc.com",
-    tier: "ProjectManager",
-    department: "Customer Success",
-    managerId: "admin-001",
-    status: "active",
-    createdAt: "2024-01-10",
-    password: "manager123",
-  },
-
-  // --- Team Leaders ---
+  // --- Delivery Roles ---
   {
     id: "leader-001",
     name: "Karthik Venkat",
-    email: "leader@vnc.com",
-    tier: "TeamLeader",
+    email: "teamlead@vnc.com",
+    tier: "TeamLead",
     department: "Engineering",
-    managerId: "manager-002",
+    managerId: "buhead-esa",
     status: "active",
     createdAt: "2024-01-12",
     password: "leader123",
   },
-  {
-    id: "leader-002",
-    name: "Meera Sharma",
-    email: "meera.s@vnc.com",
-    tier: "TeamLeader",
-    department: "Engineering",
-    managerId: "manager-002",
-    status: "active",
-    createdAt: "2024-01-12",
-    password: "leader123",
-  },
-  {
-    id: "leader-003",
-    name: "Devika Rao",
-    email: "devika.r@vnc.com",
-    tier: "TeamLeader",
-    department: "Product",
-    managerId: "manager-001",
-    status: "active",
-    createdAt: "2024-01-12",
-    password: "leader123",
-  },
-  {
-    id: "leader-004",
-    name: "Arjun Malhotra",
-    email: "arjun.m@vnc.com",
-    tier: "TeamLeader",
-    department: "Marketing",
-    managerId: "manager-003",
-    status: "active",
-    createdAt: "2024-01-12",
-    password: "leader123",
-  },
-  {
-    id: "leader-005",
-    name: "Kabir Singh",
-    email: "kabir.s@vnc.com",
-    tier: "TeamLeader",
-    department: "Sales",
-    managerId: "manager-004",
-    status: "active",
-    createdAt: "2024-01-12",
-    password: "leader123",
-  },
-  {
-    id: "leader-006",
-    name: "Fatima Sheikh",
-    email: "fatima.s@vnc.com",
-    tier: "TeamLeader",
-    department: "Finance",
-    managerId: "manager-005",
-    status: "active",
-    createdAt: "2024-01-12",
-    password: "leader123",
-  },
-  {
-    id: "leader-007",
-    name: "Nikhil Chawla",
-    email: "nikhil.c@vnc.com",
-    tier: "TeamLeader",
-    department: "Customer Success",
-    managerId: "manager-006",
-    status: "active",
-    createdAt: "2024-01-12",
-    password: "leader123",
-  },
-  {
-    id: "leader-008",
-    name: "Ishita Roy",
-    email: "ishita.r@vnc.com",
-    tier: "TeamLeader",
-    department: "Product",
-    managerId: "manager-001",
-    status: "active",
-    createdAt: "2024-01-12",
-    password: "leader123",
-  },
-
-  // --- Assistant Team Leaders ---
   {
     id: "atl-001",
     name: "Tanvi Oberoi",
-    email: "atl@vnc.com",
-    tier: "AssistantTeamLeader",
+    email: "assistant.tl@vnc.com",
+    tier: "AssistantTeamLead",
     department: "Engineering",
     managerId: "leader-001",
     status: "active",
     createdAt: "2024-01-13",
     password: "atl123",
   },
-
-  // --- Analysts ---
-  {
-    id: "analyst-001",
-    name: "Yash Trivedi",
-    email: "analyst@vnc.com",
-    tier: "Analyst",
-    department: "Finance",
-    managerId: "manager-005",
-    status: "active",
-    createdAt: "2024-01-13",
-    password: "analyst123",
-  },
-
-  // --- Employees ---
   {
     id: "employee-001",
     name: "Ravi Iyer",
-    email: "member@vnc.com",
+    email: "employee@vnc.com",
     tier: "Employee",
     department: "Engineering",
     managerId: "leader-001",
     status: "active",
     createdAt: "2024-01-15",
-    password: "member123",
-  },
-  {
-    id: "employee-002",
-    name: "Neha Kapoor",
-    email: "neha.k@vnc.com",
-    tier: "Employee",
-    department: "Engineering",
-    managerId: "leader-001",
-    status: "active",
-    createdAt: "2024-01-16",
-    password: "member123",
-  },
-  {
-    id: "employee-003",
-    name: "Aditya Rao",
-    email: "aditya.r@vnc.com",
-    tier: "Employee",
-    department: "Engineering",
-    managerId: "leader-002",
-    status: "active",
-    createdAt: "2024-01-16",
-    password: "member123",
-  },
-  {
-    id: "employee-004",
-    name: "Simran Kaur",
-    email: "simran.k@vnc.com",
-    tier: "Employee",
-    department: "Engineering",
-    managerId: "leader-002",
-    status: "active",
-    createdAt: "2024-01-16",
-    password: "member123",
-  },
-  {
-    id: "employee-005",
-    name: "Yash Trivedi",
-    email: "yash.t@vnc.com",
-    tier: "Employee",
-    department: "Product",
-    managerId: "leader-003",
-    status: "active",
-    createdAt: "2024-01-17",
-    password: "member123",
-  },
-  {
-    id: "employee-006",
-    name: "Pooja Nambiar",
-    email: "pooja.n@vnc.com",
-    tier: "Employee",
-    department: "Product",
-    managerId: "leader-003",
-    status: "active",
-    createdAt: "2024-01-17",
-    password: "member123",
-  },
-  {
-    id: "employee-007",
-    name: "Rahul Verma",
-    email: "rahul.v@vnc.com",
-    tier: "Employee",
-    department: "Product",
-    managerId: "leader-008",
-    status: "active",
-    createdAt: "2024-01-17",
-    password: "member123",
-  },
-  {
-    id: "employee-008",
-    name: "Divya Menon",
-    email: "divya.m@vnc.com",
-    tier: "Employee",
-    department: "Product",
-    managerId: "leader-008",
-    status: "active",
-    createdAt: "2024-01-17",
-    password: "member123",
-  },
-  {
-    id: "employee-009",
-    name: "Sameer Khan",
-    email: "sameer.k@vnc.com",
-    tier: "Employee",
-    department: "Marketing",
-    managerId: "leader-004",
-    status: "active",
-    createdAt: "2024-01-18",
-    password: "member123",
-  },
-  {
-    id: "employee-010",
-    name: "Ritu Chandran",
-    email: "ritu.c@vnc.com",
-    tier: "Employee",
-    department: "Marketing",
-    managerId: "leader-004",
-    status: "active",
-    createdAt: "2024-01-18",
-    password: "member123",
-  },
-  {
-    id: "employee-011",
-    name: "Varun Kapoor",
-    email: "varun.k@vnc.com",
-    tier: "Employee",
-    department: "Sales",
-    managerId: "leader-005",
-    status: "active",
-    createdAt: "2024-01-18",
-    password: "member123",
-  },
-  {
-    id: "employee-012",
-    name: "Tanya Bose",
-    email: "tanya.b@vnc.com",
-    tier: "Employee",
-    department: "Sales",
-    managerId: "leader-005",
-    status: "active",
-    createdAt: "2024-01-18",
-    password: "member123",
-  },
-  {
-    id: "employee-013",
-    name: "Anil Kumar",
-    email: "anil.k@vnc.com",
-    tier: "Employee",
-    department: "Finance",
-    managerId: "leader-006",
-    status: "active",
-    createdAt: "2024-01-19",
-    password: "member123",
-  },
-  {
-    id: "employee-014",
-    name: "Zoya Ahmed",
-    email: "zoya.a@vnc.com",
-    tier: "Employee",
-    department: "Finance",
-    managerId: "leader-006",
-    status: "active",
-    createdAt: "2024-01-19",
-    password: "member123",
-  },
-  {
-    id: "employee-015",
-    name: "Manish Pillai",
-    email: "manish.p@vnc.com",
-    tier: "Employee",
-    department: "Customer Success",
-    managerId: "leader-007",
-    status: "active",
-    createdAt: "2024-01-19",
-    password: "member123",
-  },
-  {
-    id: "employee-016",
-    name: "Kavya Reddy",
-    email: "kavya.r@vnc.com",
-    tier: "Employee",
-    department: "Customer Success",
-    managerId: "leader-007",
-    status: "active",
-    createdAt: "2024-01-19",
     password: "member123",
   },
 ];
@@ -516,7 +210,7 @@ const seedClients = [
     name: "Acme Corp",
     code: "C-001",
     legalName: "Acme Corporation Ltd",
-    businessUnit: "EFA",
+    businessUnit: "ESA",
     billingEntity: "VNC-GL",
     currency: "USD",
     contractType: "Retainer",
@@ -578,19 +272,16 @@ const cityByIndex = [
 ];
 
 const designationByTier: Record<SeedTier, (department: string) => string> = {
-  CEO: () => "Chief Executive Officer",
-  MD: () => "Managing Director",
-  Founder: () => "Founder",
-  Admin: () => "Administrator",
-  Finance: (department) => `${department} Finance Lead`,
-  BUHead: (department) => `${department} BU Head`,
-  HR: (department) => `${department} HR Lead`,
-  Marketing: (department) => `${department} Marketing Lead`,
-  ProjectManager: (department) => `${department} Project Manager`,
-  TeamLeader: (department) => `${department} Team Lead`,
-  AssistantTeamLeader: (department) => `${department} Assistant Team Lead`,
-  Analyst: (department) => `${department} Analyst`,
-  Employee: (department) => `${department} Associate`,
+  CEO: () => "CEO",
+  ManagingDirector: () => "Managing Director",
+  Admin: () => "Admin",
+  FinanceHead: () => "Finance Head",
+  BusinessUnitHead: () => "Business Unit Head",
+  HumanResources: () => "Human Resources",
+  MarketingHead: () => "Marketing Head",
+  TeamLead: () => "Team Lead",
+  AssistantTeamLead: () => "Assistant Team Lead",
+  Employee: () => "Employee",
 };
 
 // Designation master (Employee Module v1.1, Section 16 — computed once per
@@ -607,33 +298,27 @@ const designationIdByName = new Map(designationsToInsert.map((d) => [d.name, d.i
 
 const salaryByTier: Record<SeedTier, number> = {
   CEO: 8000000,
-  MD: 7000000,
-  Founder: 8000000,
+  ManagingDirector: 7000000,
   Admin: 3200000,
-  Finance: 2600000,
-  BUHead: 3000000,
-  HR: 2200000,
-  Marketing: 2200000,
-  ProjectManager: 2800000,
-  TeamLeader: 1600000,
-  AssistantTeamLeader: 1200000,
-  Analyst: 900000,
+  FinanceHead: 2600000,
+  BusinessUnitHead: 3000000,
+  HumanResources: 2200000,
+  MarketingHead: 2200000,
+  TeamLead: 1600000,
+  AssistantTeamLead: 1200000,
   Employee: 900000,
 };
 
 const dobYearByTier: Record<SeedTier, number> = {
   CEO: 1975,
-  MD: 1977,
-  Founder: 1970,
+  ManagingDirector: 1977,
   Admin: 1982,
-  Finance: 1984,
-  BUHead: 1983,
-  HR: 1986,
-  Marketing: 1987,
-  ProjectManager: 1985,
-  TeamLeader: 1990,
-  AssistantTeamLeader: 1992,
-  Analyst: 1995,
+  FinanceHead: 1984,
+  BusinessUnitHead: 1983,
+  HumanResources: 1986,
+  MarketingHead: 1987,
+  TeamLead: 1990,
+  AssistantTeamLead: 1992,
   Employee: 1996,
 };
 
@@ -643,21 +328,14 @@ const orgFieldsByTier: Record<
   { departmentFunction: DepartmentFunction; isTeamLead: boolean; isBusinessUnitHead: boolean }
 > = {
   CEO: { departmentFunction: "Leadership", isTeamLead: false, isBusinessUnitHead: false },
-  MD: { departmentFunction: "Leadership", isTeamLead: false, isBusinessUnitHead: false },
-  Founder: { departmentFunction: "Leadership", isTeamLead: false, isBusinessUnitHead: false },
+  ManagingDirector: { departmentFunction: "Leadership", isTeamLead: false, isBusinessUnitHead: false },
   Admin: { departmentFunction: "Admin", isTeamLead: false, isBusinessUnitHead: false },
-  Finance: { departmentFunction: "Finance", isTeamLead: false, isBusinessUnitHead: false },
-  BUHead: { departmentFunction: "Operations", isTeamLead: false, isBusinessUnitHead: true },
-  HR: { departmentFunction: "HR", isTeamLead: false, isBusinessUnitHead: false },
-  Marketing: { departmentFunction: "Marketing", isTeamLead: false, isBusinessUnitHead: false },
-  ProjectManager: { departmentFunction: "Operations", isTeamLead: false, isBusinessUnitHead: false },
-  TeamLeader: { departmentFunction: "Operations", isTeamLead: true, isBusinessUnitHead: false },
-  AssistantTeamLeader: {
-    departmentFunction: "Operations",
-    isTeamLead: false,
-    isBusinessUnitHead: false,
-  },
-  Analyst: { departmentFunction: "Finance", isTeamLead: false, isBusinessUnitHead: false },
+  FinanceHead: { departmentFunction: "Finance", isTeamLead: false, isBusinessUnitHead: false },
+  BusinessUnitHead: { departmentFunction: "Operations", isTeamLead: false, isBusinessUnitHead: true },
+  HumanResources: { departmentFunction: "HR", isTeamLead: false, isBusinessUnitHead: false },
+  MarketingHead: { departmentFunction: "Marketing", isTeamLead: false, isBusinessUnitHead: false },
+  TeamLead: { departmentFunction: "Operations", isTeamLead: true, isBusinessUnitHead: false },
+  AssistantTeamLead: { departmentFunction: "Operations", isTeamLead: false, isBusinessUnitHead: false },
   Employee: { departmentFunction: "Operations", isTeamLead: false, isBusinessUnitHead: false },
 };
 
@@ -674,17 +352,14 @@ const designationLevelsToInsert = [
 ];
 const designationLevelIdByTier: Record<SeedTier, string> = {
   CEO: "desiglvl-exec",
-  MD: "desiglvl-exec",
-  Founder: "desiglvl-exec",
+  ManagingDirector: "desiglvl-exec",
   Admin: "desiglvl-senior-mgmt",
-  Finance: "desiglvl-senior-mgmt",
-  BUHead: "desiglvl-senior-mgmt",
-  HR: "desiglvl-senior-mgmt",
-  Marketing: "desiglvl-senior-mgmt",
-  ProjectManager: "desiglvl-mgmt",
-  TeamLeader: "desiglvl-team-lead",
-  AssistantTeamLeader: "desiglvl-team-lead",
-  Analyst: "desiglvl-ic",
+  FinanceHead: "desiglvl-senior-mgmt",
+  BusinessUnitHead: "desiglvl-senior-mgmt",
+  HumanResources: "desiglvl-senior-mgmt",
+  MarketingHead: "desiglvl-senior-mgmt",
+  TeamLead: "desiglvl-team-lead",
+  AssistantTeamLead: "desiglvl-team-lead",
   Employee: "desiglvl-ic",
 };
 
@@ -717,7 +392,15 @@ function enrichPerson(p: SeedPerson, index: number) {
     isBusinessUnitHead: orgFields.isBusinessUnitHead,
     designationId: designationIdByName.get(designationName)!,
     designationLevelId: designationLevelIdByTier[p.tier],
-    primaryBusinessUnit: null,
+    primaryBusinessUnit: p.email.includes("esa")
+      ? "ESA"
+      : p.email.includes("sca")
+      ? "SCA"
+      : p.email.includes("anza")
+      ? "ANZA"
+      : p.email.includes("mbs")
+      ? "MBS"
+      : null,
     secondaryBusinessUnit: null,
     managerId: p.managerId,
     hireDate: p.createdAt,
@@ -897,6 +580,13 @@ const seedLeaveRequests = [
 ];
 
 async function main() {
+  console.log("Clearing existing seed data...");
+  await db.delete(credentials).catch(() => {});
+  await db.delete(tasks).catch(() => {});
+  await db.delete(leaveRequests).catch(() => {});
+  await db.delete(people).catch(() => {});
+  await db.delete(clients).catch(() => {});
+
   console.log(`Seeding ${departmentsToInsert.length} departments...`);
   await db
     .insert(departments)
@@ -948,12 +638,20 @@ async function main() {
     .values(seedLeaveRequests.map(({ createdAt: _createdAt, decidedAt: _decidedAt, ...l }) => l))
     .onConflictDoNothing({ target: leaveRequests.id });
 
-  console.log("Done. Demo logins (password shown, all hashed in the DB):");
-  console.log("  ceo@vnc.com / ceo123");
-  console.log("  md@vnc.com / md123");
-  console.log("  manager@vnc.com / manager123");
-  console.log("  leader@vnc.com / leader123");
-  console.log("  member@vnc.com / member123");
+  console.log("Done. Demo logins for all 10 roles:");
+  console.log("  CEO: ceo@vnc.com / ceo123");
+  console.log("  Managing Director: md@vnc.com / md123");
+  console.log("  ESA BU Head: buhead.esa@vnc.com / buhead123");
+  console.log("  SCA BU Head: buhead.sca@vnc.com / buhead123");
+  console.log("  ANZA BU Head: buhead.anza@vnc.com / buhead123");
+  console.log("  MBS BU Head: buhead.mbs@vnc.com / buhead123");
+  console.log("  Marketing Head: marketing.head@vnc.com / marketing123");
+  console.log("  Finance Head: finance.head@vnc.com / finance123");
+  console.log("  Human Resources: hr@vnc.com / hr123");
+  console.log("  Admin: admin@vnc.com / admin123");
+  console.log("  Team Lead: teamlead@vnc.com / leader123");
+  console.log("  Assistant Team Lead: assistant.tl@vnc.com / atl123");
+  console.log("  Employee: employee@vnc.com / member123");
 }
 
 main()

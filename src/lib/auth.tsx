@@ -23,28 +23,18 @@ export type AuthUser = Person;
 /** Static list used only to render the "quick sign-in" buttons on the login screen. */
 export const demoAccounts: { label: string; name: string; email: string; password: string }[] = [
   { label: "CEO", name: "Aarav Mehta", email: "ceo@vnc.com", password: "ceo123" },
-  { label: "MD", name: "Ishaan Kapoor", email: "md@vnc.com", password: "md123" },
-  { label: "Founder", name: "Devika Chandran", email: "founder@vnc.com", password: "founder123" },
+  { label: "Managing Director", name: "Ishaan Kapoor", email: "md@vnc.com", password: "md123" },
+  { label: "ESA Business Unit Head", name: "Divya Suresh", email: "buhead.esa@vnc.com", password: "buhead123" },
+  { label: "SCA Business Unit Head", name: "Rajesh Kumar", email: "buhead.sca@vnc.com", password: "buhead123" },
+  { label: "ANZA Business Unit Head", name: "Sarah Jenkins", email: "buhead.anza@vnc.com", password: "buhead123" },
+  { label: "MBS Business Unit Head", name: "Amit Patel", email: "buhead.mbs@vnc.com", password: "buhead123" },
+  { label: "Marketing Head", name: "Simran Kaur", email: "marketing.head@vnc.com", password: "marketing123" },
+  { label: "Finance Head", name: "Meher Kulkarni", email: "finance.head@vnc.com", password: "finance123" },
+  { label: "Human Resources", name: "Kabir Malhotra", email: "hr@vnc.com", password: "hr123" },
   { label: "Admin", name: "Nikhil Bansal", email: "admin@vnc.com", password: "admin123" },
-  { label: "Finance", name: "Meher Kulkarni", email: "finance@vnc.com", password: "finance123" },
-  { label: "BU Head", name: "Divya Suresh", email: "buhead@vnc.com", password: "buhead123" },
-  { label: "HR", name: "Kabir Malhotra", email: "hr@vnc.com", password: "hr123" },
-  { label: "Marketing", name: "Simran Kaur", email: "marketing@vnc.com", password: "marketing123" },
-  {
-    label: "Project Manager",
-    name: "Harshili Reddy",
-    email: "manager@vnc.com",
-    password: "manager123",
-  },
-  { label: "Team Leader", name: "Karthik Venkat", email: "leader@vnc.com", password: "leader123" },
-  {
-    label: "Assistant Team Leader",
-    name: "Tanvi Oberoi",
-    email: "atl@vnc.com",
-    password: "atl123",
-  },
-  { label: "Analyst", name: "Yash Trivedi", email: "analyst@vnc.com", password: "analyst123" },
-  { label: "Employee", name: "Ravi Iyer", email: "member@vnc.com", password: "member123" },
+  { label: "Team Lead", name: "Karthik Venkat", email: "teamlead@vnc.com", password: "leader123" },
+  { label: "Assistant Team Lead", name: "Tanvi Oberoi", email: "assistant.tl@vnc.com", password: "atl123" },
+  { label: "Employee", name: "Ravi Iyer", email: "employee@vnc.com", password: "member123" },
 ];
 
 const BOOTSTRAP_QUERY_KEY = ["bootstrap"] as const;
