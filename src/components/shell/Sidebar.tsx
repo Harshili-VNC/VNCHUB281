@@ -10,6 +10,7 @@ import {
   BarChart3,
   FolderKanban,
   Settings,
+  ShieldCheck,
   Sparkles,
   Star,
   Plus,
@@ -28,6 +29,9 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { useQuery } from "@tanstack/react-query";
+import { getBootstrapFn } from "@/api/queries";
+import { hasPermission } from "@/lib/permissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,7 +89,7 @@ const primary: NavEntry[] = [
   },
   { label: "Tasks", icon: ListChecks, to: "/tasks" },
   { label: "Leave & Time Off", icon: CalendarDays, to: "/leave" },
-  { label: "Recruitment", icon: UserPlus, to: "/recruitment" },
+  { label: "Permissions", icon: ShieldCheck, to: "/permission-management" },
 ];
 
 const work: NavEntry[] = [
@@ -121,52 +125,99 @@ const FULL_ACCESS = [
   "/export-center",
   "/tasks",
   "/leave",
-  "/recruitment",
   "/learning",
   "/performance",
   "/reports",
   "/documents",
+  "/permission-management",
 ];
 
 const BASE_ACCESS = ["/", "/tasks", "/leave", "/learning", "/performance", "/documents"];
 
 /**
- * Which pages a person can see in the sidebar, based on Employee Module v1.1
- * Section 3 fields (departmentFunction / isTeamLead / isBusinessUnitHead)
- * instead of a fixed role. (Actual permission to create, edit, or approve a
- * Client Master record is still enforced separately — see
- * canManageClientMaster / canApproveClientMaster in
- * src/api/clients.mutations.ts — this just controls what's visible/navigable.)
+ * Enterprise permission-driven navigation resolution.
+ * Evaluates route visibility dynamically against resolved effective user permissions map.
  */
-function accessiblePages(person: {
-  departmentFunction: string;
-  isTeamLead: boolean;
-  isBusinessUnitHead: boolean;
-}): string[] {
-  const pages = new Set(BASE_ACCESS);
+function accessiblePages(
+  person: { departmentFunction: string; isTeamLead: boolean; isBusinessUnitHead: boolean } | null,
+  userPermissions: Record<string, boolean>,
+): string[] {
+  const pages = new Set<string>();
 
-  // Top-of-company visibility.
-  if (person.departmentFunction === "Leadership" || person.departmentFunction === "Admin") {
-    return FULL_ACCESS;
-  }
-  if (person.isBusinessUnitHead) return FULL_ACCESS;
+  // Evaluate via effective permission map when hydrated
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (
+      hasPermission(userPermissions, "dashboard.view_exec") ||
+      hasPermission(userPermissions, "dashboard.view_bu") ||
+      hasPermission(userPermissions, "dashboard.view_team") ||
+      hasPermission(userPermissions, "dashboard.view_personal")
+    ) {
+      pages.add("/");
+    }
 
-  if (person.departmentFunction === "Finance" || person.departmentFunction === "Marketing") {
-    ["/clients", "/client-approvals", "/client-change-requests", "/import-center", "/import-history", "/export-center", "/reports"].forEach(
-      (p) => pages.add(p),
-    );
-  }
-  if (person.departmentFunction === "HR") {
-    ["/users", "/teams", "/employee-history", "/recruitment", "/reports"].forEach((p) => pages.add(p));
-  }
-  if (person.departmentFunction === "Operations" || person.departmentFunction === "IT / Systems") {
-    ["/clients", "/teams", "/recruitment", "/reports"].forEach((p) => pages.add(p));
-  }
-  if (person.isTeamLead) {
-    pages.add("/teams");
+    if (hasPermission(userPermissions, "employee.view")) {
+      pages.add("/users");
+      pages.add("/teams");
+      pages.add("/employee-history");
+    }
+
+    if (hasPermission(userPermissions, "client.view")) {
+      pages.add("/clients");
+      pages.add("/client-approvals");
+      pages.add("/client-change-requests");
+      pages.add("/import-center");
+      pages.add("/import-history");
+      pages.add("/export-center");
+    }
+
+    if (
+      hasPermission(userPermissions, "task.view_own") ||
+      hasPermission(userPermissions, "task.view_team") ||
+      hasPermission(userPermissions, "task.view_all")
+    ) {
+      pages.add("/tasks");
+    }
+
+    if (
+      hasPermission(userPermissions, "leave.apply") ||
+      hasPermission(userPermissions, "leave.view_team") ||
+      hasPermission(userPermissions, "leave.view_org")
+    ) {
+      pages.add("/leave");
+    }
+
+    pages.add("/learning");
+    pages.add("/performance");
+
+    if (hasPermission(userPermissions, "reports.view")) {
+      pages.add("/reports");
+    }
+
+    if (
+      hasPermission(userPermissions, "documents.download") ||
+      hasPermission(userPermissions, "documents.upload")
+    ) {
+      pages.add("/documents");
+    }
+
+    if (hasPermission(userPermissions, "system.manage_permissions")) {
+      pages.add("/permission-management");
+    }
+
+    return [...pages];
   }
 
-  return [...pages];
+  // Fallback initial hydration
+  if (person) {
+    if (person.departmentFunction === "Leadership") return FULL_ACCESS;
+    if (person.isBusinessUnitHead) return FULL_ACCESS;
+    if (person.departmentFunction === "Admin") {
+      return FULL_ACCESS.filter((p) => !p.includes("client") && !p.includes("import") && !p.includes("export"));
+    }
+    return [...BASE_ACCESS];
+  }
+
+  return [];
 }
 
 export function Sidebar() {
@@ -174,7 +225,9 @@ export function Sidebar() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useAuth();
-  const accessible = user ? accessiblePages(user) : [];
+  const bootstrapQuery = useQuery({ queryKey: ["bootstrap"], queryFn: () => getBootstrapFn() });
+  const userPermissions = (bootstrapQuery.data as any)?.userPermissions ?? {};
+  const accessible = accessiblePages(user, userPermissions);
   const visiblePrimary = filterAccessible(primary, accessible);
   const visibleWork = filterAccessible(work, accessible);
   const allNavItems = [...flattenItems(primary), ...flattenItems(work)];
@@ -351,7 +404,7 @@ export function Sidebar() {
           to="/settings"
           className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-sidebar-accent transition"
         >
-          <Settings className="h-4 w-4 text-muted-foreground" />
+          <Settings className="h-4 w-4 text-muted-foreground shrink-0" />
           {!collapsed && <span className="text-[13px]">Settings</span>}
         </Link>
       </div>

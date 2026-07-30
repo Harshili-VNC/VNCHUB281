@@ -85,6 +85,7 @@ type AddPersonResult =
 
 type AuthContextValue = {
   user: AuthUser | null;
+  userPermissions: Record<string, boolean>;
   people: Person[];
   hydrated: boolean;
   signIn: (email: string, password: string) => Promise<Result>;
@@ -113,10 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const rawUser = bootstrapQuery.data?.user ?? null;
+  const rawUserPermissions = (bootstrapQuery.data as any)?.userPermissions ?? {};
   const people = bootstrapQuery.data?.people ?? [];
   const hydrated = bootstrapQuery.isFetched;
 
   const user = activeSession ? rawUser : null;
+  const userPermissions = activeSession ? rawUserPermissions : {};
 
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: BOOTSTRAP_QUERY_KEY });
@@ -169,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthContextValue = {
     user,
+    userPermissions,
     people,
     hydrated,
     signIn,

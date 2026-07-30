@@ -14,7 +14,7 @@ import {
   tasks,
 } from "../db/schema";
 import { getSessionPersonId } from "./session";
-import { findPersonById, findClientById, countClients, loadPeople } from "./repo";
+import { findPersonById, findClientById, countClients, loadPeople, loadUserPermissionsMap } from "./repo";
 import { generateId } from "./mappers";
 import { nextClientCode } from "../lib/documents";
 
@@ -24,6 +24,8 @@ import {
   canEditCompanyInfo,
   canSubmitClient,
   canApproveClient,
+  canRejectClient,
+  canSendBackClient,
   canRaiseChangeRequest,
   canApproveChangeRequest,
   canManageTeam,
@@ -301,10 +303,11 @@ export const addClientFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
-    if (!canCreateClient(user)) {
+    const userPermissions = await loadUserPermissionsMap(user.designationId, user.designationId);
+    if (!canCreateClient(user, userPermissions)) {
       return {
         ok: false as const,
-        error: "Only Marketing Head or Finance Head can create a new client.",
+        error: "Forbidden: You do not have permission to create client records.",
       };
     }
 
@@ -619,10 +622,11 @@ export const updateClientFn = createServerFn({ method: "POST" })
 
     const target = await findClientById(data.id);
     if (!target) return { ok: false as const, error: "Client not found." };
-    if (!canEditCompanyInfo(user, target)) {
+    const userPermissions = await loadUserPermissionsMap(user.designationId, user.designationId);
+    if (!canEditCompanyInfo(user, target, userPermissions)) {
       return {
         ok: false as const,
-        error: "You are not authorized to edit this client record.",
+        error: "Forbidden: You are not authorized to edit this client record.",
       };
     }
 
@@ -1110,10 +1114,11 @@ export const submitClientForReviewFn = createServerFn({ method: "POST" })
 
     const target = await findClientById(data.id);
     if (!target) return { ok: false as const, error: "Client not found." };
-    if (!canSubmitClient(user, target)) {
+    const userPermissions = await loadUserPermissionsMap(user.designationId, user.designationId);
+    if (!canSubmitClient(user, target, userPermissions)) {
       return {
         ok: false as const,
-        error: "Only Marketing Head or Finance Head can submit client records for approval.",
+        error: "Forbidden: You are not authorized to submit client records for approval.",
       };
     }
 
@@ -1196,10 +1201,18 @@ export const decideClientApprovalFn = createServerFn({ method: "POST" })
 
     const target = await findClientById(data.id);
     if (!target) return { ok: false as const, error: "Client not found." };
-    if (!canApproveClient(user, target)) {
+    const userPermissions = await loadUserPermissionsMap(user.designationId, user.designationId);
+    const isValidDecisionPerm =
+      data.decision === "Approved"
+        ? canApproveClient(user, target, userPermissions)
+        : data.decision === "Rejected"
+          ? canRejectClient(user, target, userPermissions)
+          : canSendBackClient(user, target, userPermissions);
+
+    if (!isValidDecisionPerm) {
       return {
         ok: false as const,
-        error: "Only the Business Unit Head for this client can approve, reject, or send back.",
+        error: `Forbidden: You do not have permission to perform '${data.decision}' on this client.`,
       };
     }
     if (data.decision !== "Approved" && !data.note?.trim()) {

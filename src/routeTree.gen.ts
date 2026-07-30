@@ -24,6 +24,7 @@ import { Route as LearningRouteImport } from './routes/learning'
 import { Route as LeaveRouteImport } from './routes/leave'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PerformanceRouteImport } from './routes/performance'
+import { Route as PermissionManagementRouteImport } from './routes/permission-management'
 import { Route as RecruitmentRouteImport } from './routes/recruitment'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -106,6 +107,11 @@ const PerformanceRoute = PerformanceRouteImport.update({
   path: '/performance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PermissionManagementRoute = PermissionManagementRouteImport.update({
+  id: '/permission-management',
+  path: '/permission-management',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RecruitmentRoute = RecruitmentRouteImport.update({
   id: '/recruitment',
   path: '/recruitment',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/performance': typeof PerformanceRoute
+  '/permission-management': typeof PermissionManagementRoute
   '/recruitment': typeof RecruitmentRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/performance': typeof PerformanceRoute
+  '/permission-management': typeof PermissionManagementRoute
   '/recruitment': typeof RecruitmentRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
   '/performance': typeof PerformanceRoute
+  '/permission-management': typeof PermissionManagementRoute
   '/recruitment': typeof RecruitmentRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/leave'
     | '/login'
     | '/performance'
+    | '/permission-management'
     | '/recruitment'
     | '/reports'
     | '/settings'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/leave'
     | '/login'
     | '/performance'
+    | '/permission-management'
     | '/recruitment'
     | '/reports'
     | '/settings'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/leave'
     | '/login'
     | '/performance'
+    | '/permission-management'
     | '/recruitment'
     | '/reports'
     | '/settings'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   LeaveRoute: typeof LeaveRoute
   LoginRoute: typeof LoginRoute
   PerformanceRoute: typeof PerformanceRoute
+  PermissionManagementRoute: typeof PermissionManagementRoute
   RecruitmentRoute: typeof RecruitmentRoute
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
@@ -410,6 +423,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PerformanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/permission-management': {
+      id: '/permission-management'
+      path: '/permission-management'
+      fullPath: '/permission-management'
+      preLoaderRoute: typeof PermissionManagementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/recruitment': {
       id: '/recruitment'
       path: '/recruitment'
@@ -471,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeaveRoute: LeaveRoute,
   LoginRoute: LoginRoute,
   PerformanceRoute: PerformanceRoute,
+  PermissionManagementRoute: PermissionManagementRoute,
   RecruitmentRoute: RecruitmentRoute,
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,

@@ -68,12 +68,8 @@ const categoryTone: Record<DocumentCategory, string> = {
   Reports: "bg-[color:var(--purple)]/12 text-[color:var(--purple)]",
 };
 
-function canDelete(person: { departmentFunction: string; isBusinessUnitHead: boolean }) {
-  return (
-    person.departmentFunction === "Leadership" ||
-    person.departmentFunction === "Admin" ||
-    person.isBusinessUnitHead
-  );
+function canDelete(userPermissions?: Record<string, boolean>) {
+  return hasPermission(userPermissions, "documents.delete");
 }
 
 function triggerBase64Download(base64: string, mimeType: string, fileName: string) {
@@ -91,8 +87,10 @@ function triggerBase64Download(base64: string, mimeType: string, fileName: strin
   URL.revokeObjectURL(url);
 }
 
+import { hasPermission } from "@/lib/permissions";
+
 function DocumentsPage() {
-  const { user, people } = useAuth();
+  const { user, userPermissions, people } = useAuth();
   const { documents, clients, deleteDocument } = useWorkspace();
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<DocumentCategory | "all">("all");
@@ -164,9 +162,11 @@ function DocumentsPage() {
               Every contract, MOM, invoice, and report — searchable and organized by client.
             </p>
           </div>
-          <Button onClick={() => setUploadOpen(true)} className="gap-1.5">
-            <Upload className="h-4 w-4" /> Upload
-          </Button>
+          {hasPermission(userPermissions, "documents.upload") && (
+            <Button onClick={() => setUploadOpen(true)} className="gap-1.5">
+              <Upload className="h-4 w-4" /> Upload
+            </Button>
+          )}
         </div>
 
         <div className="mt-5 flex items-center gap-2 flex-wrap">
@@ -283,7 +283,7 @@ function DocumentsPage() {
                         >
                           <Download className="h-3.5 w-3.5" />
                         </button>
-                        {canDelete(user) && (
+                        {canDelete(userPermissions) && (
                           <button
                             title="Delete"
                             onClick={() => setDeleteTarget(doc)}

@@ -41,6 +41,7 @@ import {
   type DepartmentFunction,
 } from "@/lib/auth";
 import { getEmployeeProfileFn } from "@/api/queries";
+import { hasPermission } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,7 +88,7 @@ export const Route = createFileRoute("/teams")({
 type NewLogin = { name: string; email: string; password: string; label: string };
 
 function TeamsPage() {
-  const { user, people } = useAuth();
+  const { user, userPermissions, people } = useAuth();
   const [view, setView] = useState<"table" | "chart">("table");
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Person | null>(null);
@@ -103,7 +104,7 @@ function TeamsPage() {
   const activeCount = myTeam.filter((p) => p.status === "active").length;
   const inactiveCount = myTeam.length - activeCount;
   const directReportCount = getDirectReports(people, user.id).length;
-  const canAdd = canAddPeople(user);
+  const canAdd = canAddPeople(user, userPermissions);
   const isTopLevel = user.departmentFunction === "Leadership" || user.departmentFunction === "Admin";
 
   function managerName(person: Person) {
@@ -212,9 +213,11 @@ function TeamsPage() {
                       <Button variant="ghost" size="sm" onClick={() => setProfileTarget(person)} title="View 10-Tab Profile">
                         <Eye className="h-3.5 w-3.5" /> Profile
                       </Button>
-                      <IconButton label="Edit" onClick={() => setEditTarget(person)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </IconButton>
+                      {hasPermission(userPermissions, "employee.edit") && (
+                        <IconButton label="Edit" onClick={() => setEditTarget(person)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </IconButton>
+                      )}
                     </td>
                   </tr>
                 ))}

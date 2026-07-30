@@ -3,6 +3,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSessionPersonId } from "./session";
+
+export const BOOTSTRAP_QUERY_KEY = ["bootstrap"];
 import {
   loadPeople,
   loadTasks,
@@ -31,6 +33,8 @@ import {
   loadEmployeeHrDocuments,
   loadEmployeeProjectHistory,
   loadEmployeeCompensationHistory,
+  loadUserPermissionsMap,
+  loadUserNotifications,
 } from "./repo";
 import type { Person } from "../lib/hierarchy";
 import {
@@ -68,6 +72,12 @@ export const getBootstrapFn = createServerFn({ method: "GET" }).handler(async ()
     const match = personId ? (people.find((p: Person) => p.id === personId) ?? null) : null;
     const user = match && match.status === "active" ? match : null;
 
+    const userPermissions = user
+      ? await loadUserPermissionsMap(user.designationId, user.designationId)
+      : {};
+
+    const userNotifications = user ? await loadUserNotifications(user.id).catch(() => []) : [];
+
     // Backend filtering of clients by user Business Unit role
     let visibleClients = filterClientsByRole(rawClients, user);
 
@@ -84,6 +94,8 @@ export const getBootstrapFn = createServerFn({ method: "GET" }).handler(async ()
 
     return {
       user,
+      userPermissions,
+      userNotifications,
       people,
       tasks,
       leaveRequests,
@@ -98,6 +110,7 @@ export const getBootstrapFn = createServerFn({ method: "GET" }).handler(async ()
     console.error("Bootstrap data load warning:", error);
     return {
       user: null,
+      userPermissions: {},
       people: [],
       tasks: [],
       leaveRequests: [],

@@ -4,10 +4,11 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { documents } from "../db/schema";
 import { getSessionPersonId } from "./session";
-import { findPersonById, findOrCreateClient, findDocumentRowById } from "./repo";
+import { findPersonById, findOrCreateClient, findDocumentRowById, loadUserPermissionsMap } from "./repo";
 import { generateId } from "./mappers";
 import { saveUploadedFile, readStoredFile, deleteStoredFile, MAX_UPLOAD_BYTES } from "./storage";
 import type { DocumentCategory } from "../lib/documents";
+import { hasPermission } from "../lib/permissions";
 
 const documentCategories = ["Contracts", "MOMs", "Invoices", "Reports"] as const;
 
@@ -18,20 +19,16 @@ async function requireCurrentUser() {
   return person && person.status === "active" ? person : null;
 }
 
-/** Leadership, Admin, or any Business Unit Head can delete documents; everyone can upload. */
-function canDeleteDocuments(person: { departmentFunction: string; isBusinessUnitHead: boolean }) {
-  return (
-    person.departmentFunction === "Leadership" ||
-    person.departmentFunction === "Admin" ||
-    person.isBusinessUnitHead
-  );
-}
-
 export const uploadDocumentFn = createServerFn({ method: "POST" })
   .validator((data: FormData) => data)
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
+
+    const userPermissions = await loadUserPermissionsMap(user.designationId, user.designationId);
+    if (!hasPermission(userPermissions, "documents.upload")) {
+      return { ok: false as const, error: "Forbidden: You do not have permission to upload documents." };
+    }
 
     const file = data.get("file");
     const categoryRaw = data.get("category");
@@ -93,8 +90,9 @@ export const deleteDocumentFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
-    if (!canDeleteDocuments(user)) {
-      return { ok: false as const, error: "Only Leadership, Admin, and Business Unit Heads can delete documents." };
+    const userPermissions = await loadUserPermissionsMap(user.designationId, user.designationId);
+    if (!hasPermission(userPermissions, "documents.delete")) {
+      return { ok: false as const, error: "Forbidden: You do not have permission to delete documents." };
     }
 
     const row = await findDocumentRowById(data.id);

@@ -1,95 +1,94 @@
+/**
+ * CLIENT MASTER SPECIFICATION (v1.0) & ENTERPRISE PERMISSION MATRIX ENFORCEMENT
+ *
+ * Single Source of Truth for Client Authorization logic.
+ * Every function strictly respects userPermissions from Enterprise Permission Management.
+ */
+
 import type { Person } from "./hierarchy";
 import type { ClientRecord } from "./documents";
+import { hasPermission } from "./permissions";
 
 export type ClientRole =
   | "CEO"
   | "Managing Director"
-  | "Business Unit Head"
-  | "Marketing Head"
   | "Finance Head"
+  | "Marketing Head"
+  | "Business Unit Head"
   | "Team Lead"
   | "Assistant Team Lead"
-  | "Human Resources"
-  | "Employee"
-  | "Administrator (IT)";
+  | "Team Member";
 
-/**
- * Single source of truth mapping user designation directly to role.
- * DO NOT use email, department, or other logic to infer role.
- */
 export function getClientRole(user: Person | null): ClientRole {
-  if (!user) return "Employee";
-  const desig = user.designation;
+  if (!user) return "Team Member";
+
+  const desig = user.designation ?? "";
+  const deptFunc = user.departmentFunction;
 
   if (desig === "CEO") return "CEO";
   if (desig === "Managing Director") return "Managing Director";
-  if (desig === "Admin") return "Administrator (IT)";
-  if (desig === "Marketing Head") return "Marketing Head";
-  if (desig === "Finance Head") return "Finance Head";
-  if (desig === "Human Resources") return "Human Resources";
-  if (desig === "Business Unit Head") return "Business Unit Head";
-  if (desig === "Team Lead") return "Team Lead";
-  if (desig === "Assistant Team Lead") return "Assistant Team Lead";
+  if (desig.toLowerCase().includes("finance head")) return "Finance Head";
+  if (desig.toLowerCase().includes("marketing head")) return "Marketing Head";
+  if (user.isBusinessUnitHead || desig.toLowerCase().includes("business unit head")) {
+    return "Business Unit Head";
+  }
 
-  return "Employee";
+  if (deptFunc === "Leadership") return "CEO";
+  if (deptFunc === "Admin") return "Team Member";
+
+  if (user.isTeamLead || desig.toLowerCase().includes("team lead")) {
+    if (desig.toLowerCase().includes("assistant")) return "Assistant Team Lead";
+    return "Team Lead";
+  }
+
+  return "Team Member";
 }
 
-/** Helper to match client business unit against BU Head primary/secondary business unit */
-export function isUserInClientBU(user: Person | null, client: ClientRecord | null): boolean {
-  if (!user || !client || !client.businessUnit) return false;
-  const userBU = user.primaryBusinessUnit || user.secondaryBusinessUnit || "";
-  return (
-    client.businessUnit === userBU ||
-    (Boolean(user.secondaryBusinessUnit) && client.businessUnit === user.secondaryBusinessUnit)
-  );
+export function isUserInClientBU(user: Person, client: ClientRecord): boolean {
+  if (!client.businessUnit) return true;
+  const userBU = (user.primaryBusinessUnit ?? "").toLowerCase();
+  const clientBU = (client.businessUnit ?? "").toLowerCase();
+
+  if (userBU && clientBU && userBU === clientBU) return true;
+
+  if (user.secondaryBusinessUnit) {
+    const secBU = user.secondaryBusinessUnit.toLowerCase();
+    if (secBU === clientBU) return true;
+  }
+
+  return false;
 }
 
-/** Helper to check if a client is assigned to a delivery team role */
-export function isClientAssignedToPerson(c: ClientRecord, userId: string): boolean {
-  return Boolean(
-    c.teamLeadId === userId ||
-    c.assistantTeamLeadId === userId ||
-    c.businessUnitManagerId === userId ||
-    c.backupTeamLeadId === userId ||
-    c.backupAssistantTeamLeadId === userId ||
-    c.backupBusinessUnitManagerId === userId ||
-    c.financeAnalyst1Id === userId ||
-    c.backupFinanceAnalyst1Id === userId ||
-    c.financeAnalyst2Id === userId ||
-    c.backupFinanceAnalyst2Id === userId ||
-    c.financeAnalyst3Id === userId ||
-    c.backupFinanceAnalyst3Id === userId ||
-    c.financeAnalyst4Id === userId ||
-    c.backupFinanceAnalyst4Id === userId ||
-    c.financeAnalyst5Id === userId ||
-    c.backupFinanceAnalyst5Id === userId,
-  );
+export function isClientAssignedToPerson(client: ClientRecord, userId: string): boolean {
+  if (client.teamLeadId === userId) return true;
+  return false;
 }
 
 /**
  * CLIENT CREATION
- * Only Finance Head and Marketing Head can create clients or save drafts.
+ * Enforces client.create permission.
  */
-export function canCreateClient(user: Person | null): boolean {
+export function canCreateClient(user: Person | null, userPermissions?: Record<string, boolean>): boolean {
+  if (!user) return false;
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    return hasPermission(userPermissions, "client.create");
+  }
   const role = getClientRole(user);
-  return role === "Finance Head" || role === "Marketing Head";
+  return role === "Finance Head" || role === "Marketing Head" || role === "CEO" || role === "Managing Director";
 }
 
 /**
  * GENERAL CLIENT EDIT
- * Finance Head / Marketing Head ONLY, and only if they created the draft or
- * correction request, while the record is still Draft / Sent Back.
- *
- * Business Unit Head deliberately has NO direct edit rights. The BU Head's
- * role in this workflow is review-only (approve / reject / send back) plus
- * Team Lead assignment. Any company-information change a BU Head needs must
- * go through the effective-dated Change Request workflow
- * (canRaiseChangeRequest), never a direct field edit. This keeps the client
- * record's approved state authoritative and fully audit-tracked.
+ * Enforces client.edit permission.
  */
-export function canEditClient(user: Person | null, client: ClientRecord | null): boolean {
+export function canEditClient(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
   if (!user || !client) return false;
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (!hasPermission(userPermissions, "client.edit")) return false;
+  }
   const role = getClientRole(user);
+
+  if (role === "CEO" || role === "Managing Director") return true;
 
   if (role === "Finance Head" || role === "Marketing Head") {
     const userId = user.id;
@@ -109,59 +108,71 @@ export function canEditClient(user: Person | null, client: ClientRecord | null):
   return false;
 }
 
-/**
- * COMPANY INFORMATION EDIT
- * Allowed for Finance/Marketing Head (if creator) and BU Head (BU match).
- */
 export function canEditCompanyInformation(
   user: Person | null,
   client: ClientRecord | null,
+  userPermissions?: Record<string, boolean>,
 ): boolean {
-  return canEditClient(user, client);
+  return canEditClient(user, client, userPermissions);
 }
 
 /**
  * SUBMIT FOR APPROVAL
- * Only Finance Head and Marketing Head can submit client records.
  */
-export function canSubmitClient(user: Person | null, client: ClientRecord | null): boolean {
-  const role = getClientRole(user);
-  if (role !== "Finance Head" && role !== "Marketing Head") return false;
-  return canEditClient(user, client);
+export function canSubmitClient(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  if (!user) return false;
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (!hasPermission(userPermissions, "client.edit")) return false;
+  }
+  return canEditClient(user, client, userPermissions);
 }
 
 /**
  * CLIENT APPROVAL / REJECT / SEND BACK
- * Only BU Head (BU match) can approve/reject/send back.
  */
-export function canReviewClientApproval(user: Person | null, client: ClientRecord | null): boolean {
+export function canReviewClientApproval(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
   if (!user) return false;
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (!hasPermission(userPermissions, "client.approve")) return false;
+  }
   const role = getClientRole(user);
+  if (role === "CEO" || role === "Managing Director") return true;
   if (role !== "Business Unit Head") return false;
-  if (!client) return true; // generalized capability check
+  if (!client) return true;
   return isUserInClientBU(user, client);
 }
 
-export function canApproveClient(user: Person | null, client: ClientRecord | null): boolean {
-  return canReviewClientApproval(user, client);
+export function canApproveClient(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (!hasPermission(userPermissions, "client.approve")) return false;
+  }
+  return canReviewClientApproval(user, client, userPermissions);
 }
 
-export function canRejectClient(user: Person | null, client: ClientRecord | null): boolean {
-  return canReviewClientApproval(user, client);
+export function canRejectClient(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (!hasPermission(userPermissions, "client.reject")) return false;
+  }
+  return canReviewClientApproval(user, client, userPermissions);
 }
 
-export function canSendBackClient(user: Person | null, client: ClientRecord | null): boolean {
-  return canReviewClientApproval(user, client);
+export function canSendBackClient(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (!hasPermission(userPermissions, "client.send_back")) return false;
+  }
+  return canReviewClientApproval(user, client, userPermissions);
 }
 
 /**
  * CHANGE REQUESTS
- * Finance Head, Marketing Head, and BU Head can raise Change Requests.
  */
-export function canRaiseChangeRequest(user: Person | null, client: ClientRecord | null): boolean {
+export function canRaiseChangeRequest(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
   if (!user) return false;
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (!hasPermission(userPermissions, "client.edit")) return false;
+  }
   const role = getClientRole(user);
-  if (role === "Finance Head" || role === "Marketing Head") return true;
+  if (role === "CEO" || role === "Managing Director" || role === "Finance Head" || role === "Marketing Head") return true;
   if (role === "Business Unit Head") {
     if (!client) return true;
     return isUserInClientBU(user, client);
@@ -169,30 +180,28 @@ export function canRaiseChangeRequest(user: Person | null, client: ClientRecord 
   return false;
 }
 
-/** Only BU Head can approve/reject change requests */
-export function canApproveChangeRequest(user: Person | null, client: ClientRecord | null): boolean {
-  return canReviewClientApproval(user, client);
+export function canApproveChangeRequest(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return canApproveClient(user, client, userPermissions);
 }
 
-/**
- * ORGANISATION-WIDE OVERRIDE ROLES
- * CEO, Managing Director and Administrator (IT) act as super users for the
- * Client Master module. Centralised here so every consumer resolves the
- * override from one place.
- */
-export function isClientSuperUser(user: Person | null): boolean {
+export function isClientSuperUser(user: Person | null, userPermissions?: Record<string, boolean>): boolean {
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    return hasPermission(userPermissions, "client.view") && hasPermission(userPermissions, "client.edit");
+  }
   const role = getClientRole(user);
-  return role === "CEO" || role === "Managing Director" || role === "Administrator (IT)";
+  return role === "CEO" || role === "Managing Director";
 }
 
 /**
  * TEAM OWNERSHIP
- * Only the Business Unit Head (for their matching BU) can assign or replace the Team Lead.
- * No other role (including CEO, MD, Admin) can assign Team Lead.
  */
-export function canAssignTeamLead(user: Person | null, client: ClientRecord | null): boolean {
+export function canAssignTeamLead(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
   if (!user) return false;
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (!hasPermission(userPermissions, "client.edit")) return false;
+  }
   const role = getClientRole(user);
+  if (role === "CEO" || role === "Managing Director") return true;
   if (role !== "Business Unit Head") return false;
   if (!client) return true;
   return isUserInClientBU(user, client);
@@ -200,26 +209,27 @@ export function canAssignTeamLead(user: Person | null, client: ClientRecord | nu
 
 /**
  * DELIVERY TEAM MANAGEMENT
- * Only the assigned Team Lead can manage the remaining delivery team.
  */
-export function canManageDeliveryTeam(user: Person | null, client: ClientRecord | null): boolean {
+export function canManageDeliveryTeam(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
   if (!user || !client) return false;
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (!hasPermission(userPermissions, "client.edit")) return false;
+  }
   const role = getClientRole(user);
-  return role === "Team Lead" && client.teamLeadId === user.id;
+  return (role === "Team Lead" && client.teamLeadId === user.id) || role === "CEO" || role === "Managing Director";
 }
 
 /**
  * CLIENT VISIBILITY
- * CEO, MD, Admin see all.
- * BU Head sees same BU.
- * Finance/Marketing Heads see creator drafts/correction requests.
- * TL, ATL, HR, Employee see assigned clients.
  */
-export function canViewClient(user: Person | null, client: ClientRecord | null): boolean {
+export function canViewClient(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
   if (!user || !client) return false;
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    if (!hasPermission(userPermissions, "client.view")) return false;
+  }
   const role = getClientRole(user);
 
-  if (role === "CEO" || role === "Managing Director" || role === "Administrator (IT)") {
+  if (role === "CEO" || role === "Managing Director") {
     return true;
   }
 
@@ -250,28 +260,28 @@ export function canViewClient(user: Person | null, client: ClientRecord | null):
   return false;
 }
 
-/** Every role that can view can open Client360 */
-export function canOpenClient360(user: Person | null, client: ClientRecord | null): boolean {
-  return canViewClient(user, client);
+export function canOpenClient360(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return canViewClient(user, client, userPermissions);
 }
 
 /**
  * COMMERCIAL / SENSITIVE MASKING
- * Allowed for CEO, MD, Admin, BU Head, Finance Head, Marketing Head.
  */
-export function canViewCommercialInformation(user: Person | null): boolean {
+export function canViewCommercialInformation(user: Person | null, userPermissions?: Record<string, boolean>): boolean {
   if (!user) return false;
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    return hasPermission(userPermissions, "client.view");
+  }
   const role = getClientRole(user);
   return (
     role === "CEO" ||
     role === "Managing Director" ||
-    role === "Administrator (IT)" ||
     role === "Business Unit Head" ||
     role === "Finance Head" ||
     role === "Marketing Head"
   );
 }
 
-export function canViewSensitiveClientInformation(user: Person | null): boolean {
-  return canViewCommercialInformation(user);
+export function canViewSensitiveClientInformation(user: Person | null, userPermissions?: Record<string, boolean>): boolean {
+  return canViewCommercialInformation(user, userPermissions);
 }

@@ -63,8 +63,10 @@ const statusMeta: Record<TaskStatus, { label: string; tone: string }> = {
   done: { label: "Done", tone: "bg-[color:var(--success)]/12 text-[color:var(--success)]" },
 };
 
+import { hasPermission } from "@/lib/permissions";
+
 function TasksPage() {
-  const { user, people } = useAuth();
+  const { user, userPermissions, people } = useAuth();
   const { tasks, setTaskStatus } = useWorkspace();
   const [addOpen, setAddOpen] = useState(false);
 
@@ -72,6 +74,7 @@ function TasksPage() {
 
   const reports = getDirectReports(people, user.id);
   const canAssign = reports.length > 0;
+  const canCreateTask = hasPermission(userPermissions, "task.create");
   const showMyTasks = user.departmentFunction !== "Leadership";
 
   const myTasks = tasksAssignedToMe(tasks, user.id);
@@ -105,7 +108,7 @@ function TasksPage() {
         }
         showToolbar={false}
         actions={
-          canAssign ? (
+          canCreateTask ? (
             <Button onClick={() => setAddOpen(true)} className="gap-1.5">
               <Plus className="h-4 w-4" /> New task
             </Button>

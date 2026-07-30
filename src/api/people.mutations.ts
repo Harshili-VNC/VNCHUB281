@@ -12,9 +12,11 @@ import {
   findOrCreateDesignation,
   emailExists,
   countPeople,
+  loadUserPermissionsMap,
 } from "./repo";
 import { generateId } from "./mappers";
 import { hashPassword } from "../lib/password";
+import { hasPermission } from "../lib/permissions";
 
 async function requireCurrentUser() {
   const personId = await getSessionPersonId();
@@ -23,11 +25,19 @@ async function requireCurrentUser() {
   return person && person.status === "active" ? person : null;
 }
 
-function canManagePeople(person: {
-  departmentFunction: string;
-  isTeamLead: boolean;
-  isBusinessUnitHead: boolean;
-}) {
+async function canManagePeople(
+  person: {
+    designationId?: string | null;
+    departmentFunction: string;
+    isTeamLead: boolean;
+    isBusinessUnitHead: boolean;
+  },
+  actionPermission: "employee.create" | "employee.edit" | "employee.deactivate" = "employee.edit"
+) {
+  const userPermissions = await loadUserPermissionsMap(person.designationId, person.designationId);
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    return hasPermission(userPermissions, actionPermission);
+  }
   return (
     person.departmentFunction === "Leadership" ||
     person.departmentFunction === "Admin" ||
@@ -103,7 +113,7 @@ export const addPersonFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
-    if (!canManagePeople(user)) {
+    if (!(await canManagePeople(user, "employee.create"))) {
       return { ok: false as const, error: "You don't have permission to add employees." };
     }
 
@@ -178,7 +188,7 @@ export const updatePersonFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
-    if (!canManagePeople(user)) {
+    if (!(await canManagePeople(user, "employee.edit"))) {
       return { ok: false as const, error: "You don't have permission to edit employees." };
     }
 
@@ -257,7 +267,7 @@ export const setPersonStatusFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
-    if (!canManagePeople(user)) {
+    if (!(await canManagePeople(user, "employee.deactivate"))) {
       return { ok: false as const, error: "You don't have permission to update employee status." };
     }
 
@@ -282,7 +292,7 @@ export const reassignPersonFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
-    if (!canManagePeople(user)) {
+    if (!(await canManagePeople(user, "employee.edit"))) {
       return { ok: false as const, error: "You don't have permission to reassign employees." };
     }
 

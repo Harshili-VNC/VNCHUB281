@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppShell } from "@/components/shell/AppShell";
 import { PageHeader } from "@/components/shell/PageHeader";
@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Sliders,
   Shield,
+  ShieldCheck,
   Palette,
   Bell,
   Globe,
@@ -220,6 +221,27 @@ function SettingsPage() {
       />
 
       <div className="px-8 pb-10 space-y-6">
+        {/* Permission Management Quick Link Banner */}
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">Enterprise Permission Management Module</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Configure 59 granular access permissions across 8 categories for each designation dynamically without code deployment.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/permission-management"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition shrink-0"
+          >
+            Open Permission Matrix
+          </Link>
+        </div>
+
         {/* Sub-nav tabs */}
         <div className="flex items-center gap-2 border-b border-border pb-3">
           <button

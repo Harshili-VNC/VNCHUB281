@@ -16,7 +16,11 @@ export const Route = createFileRoute("/export-center")({
   component: ExportCenterPage,
 });
 
+import { useAuth } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
+
 function ExportCenterPage() {
+  const { userPermissions } = useAuth();
   const { createExport, exportJobs } = useWorkspace();
   const [module, setModule] = useState<ImportExportModule>("Client Master");
   const [busy, setBusy] = useState(false);
@@ -44,6 +48,17 @@ function ExportCenterPage() {
   }
 
   const recentJobs = [...exportJobs].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 8);
+
+  if (userPermissions && Object.keys(userPermissions).length > 0 && !hasPermission(userPermissions, "client.view") && !hasPermission(userPermissions, "system.export_data")) {
+    return (
+      <AppShell>
+        <div className="p-12 text-center">
+          <h2 className="text-xl font-bold text-destructive">403 — Access Denied</h2>
+          <p className="text-sm text-muted-foreground mt-2">You do not have permission to access the Export Center.</p>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

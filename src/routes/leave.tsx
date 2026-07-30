@@ -74,8 +74,10 @@ function downloadCsv(filename: string, content: string) {
   URL.revokeObjectURL(url);
 }
 
+import { hasPermission } from "@/lib/permissions";
+
 function LeavePage() {
-  const { user, people } = useAuth();
+  const { user, userPermissions, people } = useAuth();
   const { leaveRequests, decideLeave } = useWorkspace();
   const [requestOpen, setRequestOpen] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<"all" | LeaveStatus>("all");
@@ -85,8 +87,8 @@ function LeavePage() {
   const isTopLevel =
     user.departmentFunction === "Leadership" || user.departmentFunction === "Admin";
   const reports = getDirectReports(people, user.id);
-  const canApprove = reports.length > 0;
-  const canRequest = Boolean(user.managerId);
+  const canApprove = (reports.length > 0 || isTopLevel) && (hasPermission(userPermissions, "leave.approve") || hasPermission(userPermissions, "leave.reject"));
+  const canRequest = Boolean(user.managerId) && hasPermission(userPermissions, "leave.apply");
 
   const pending = pendingLeaveForApprover(leaveRequests, user.id);
   const mine = myLeaveRequests(leaveRequests, user.id);

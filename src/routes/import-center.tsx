@@ -29,7 +29,11 @@ function templateFor(module: ImportExportModule): string {
     : "firstName,lastName,email\nJane,Doe,jane.doe@example.com\n";
 }
 
+import { useAuth } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
+
 function ImportCenterPage() {
+  const { userPermissions } = useAuth();
   const { runImport } = useWorkspace();
   const [module, setModule] = useState<ImportExportModule>("Client Master");
   const [file, setFile] = useState<File | null>(null);
@@ -66,6 +70,17 @@ function ImportCenterPage() {
       result.failedRows === 0
         ? `${result.successRows} rows imported`
         : `${result.successRows} imported, ${result.failedRows} failed`,
+    );
+  }
+
+  if (userPermissions && Object.keys(userPermissions).length > 0 && !hasPermission(userPermissions, "client.view") && !hasPermission(userPermissions, "system.import_data")) {
+    return (
+      <AppShell>
+        <div className="p-12 text-center">
+          <h2 className="text-xl font-bold text-destructive">403 — Access Denied</h2>
+          <p className="text-sm text-muted-foreground mt-2">You do not have permission to access the Import Center.</p>
+        </div>
+      </AppShell>
     );
   }
 

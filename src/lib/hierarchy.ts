@@ -121,7 +121,12 @@ export function isTopLeadership(person: Person): boolean {
   );
 }
 
-export function canAddPeople(actor: Person): boolean {
+import { hasPermission } from "./permissions";
+
+export function canAddPeople(actor: Person, userPermissions?: Record<string, boolean>): boolean {
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    return hasPermission(userPermissions, "employee.create");
+  }
   const desig = (actor.designation ?? "").toLowerCase();
   return (
     actor.departmentFunction === "Leadership" ||

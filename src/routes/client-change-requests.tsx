@@ -6,6 +6,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useWorkspace } from "@/lib/workspace";
 import { useAuth } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { canRaiseChangeRequest, canApproveChangeRequest } from "@/lib/client-visibility";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/client-change-requests")({
 
 const FIELDS = ["Business Unit", "Billing Entity", "Client Status"] as const;
 function ChangeRequestsPage() {
-  const { user } = useAuth();
+  const { user, userPermissions } = useAuth();
   const {
     clients,
     clientChangeRequests,
@@ -108,6 +109,17 @@ function ChangeRequestsPage() {
     setShowReview(false);
     setSelectedRequest(null);
     setReviewNote("");
+  }
+
+  if (userPermissions && Object.keys(userPermissions).length > 0 && !hasPermission(userPermissions, "client.view")) {
+    return (
+      <AppShell>
+        <div className="p-12 text-center">
+          <h2 className="text-xl font-bold text-destructive">403 — Access Denied</h2>
+          <p className="text-sm text-muted-foreground mt-2">You do not have permission to view Client Change Requests.</p>
+        </div>
+      </AppShell>
+    );
   }
 
   return (

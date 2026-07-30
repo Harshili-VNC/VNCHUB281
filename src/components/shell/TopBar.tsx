@@ -13,9 +13,15 @@ import {
   Search,
   Settings,
   UserPlus,
+  Shield,
+  Check,
+  CheckCheck,
 } from "lucide-react";
 import { useAuth, getDirectReports, canAddPeople } from "@/lib/auth";
 import { useWorkspace, tasksDueToday, pendingLeaveForApprover } from "@/lib/workspace";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getBootstrapFn, BOOTSTRAP_QUERY_KEY } from "@/api/queries";
+import { markNotificationsReadFn } from "@/api/permissions.mutations";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,9 +58,19 @@ const labels: Record<string, string> = {
 export function TopBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, people, signOut } = useAuth();
   const { tasks, leaveRequests } = useWorkspace();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [expandedNotifId, setExpandedNotifId] = useState<string | null>(null);
+
+  const bootstrapQuery = useQuery({
+    queryKey: BOOTSTRAP_QUERY_KEY,
+    queryFn: () => getBootstrapFn(),
+  });
+
+  const userNotifications: any[] = (bootstrapQuery.data as any)?.userNotifications ?? [];
+  const unreadUserNotifs = userNotifications.filter((n) => !n.isRead);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -82,7 +98,17 @@ export function TopBar() {
 
   const dueToday = user ? tasksDueToday(tasks, user.id) : [];
   const pendingApprovals = user ? pendingLeaveForApprover(leaveRequests, user.id) : [];
-  const notificationCount = dueToday.length + pendingApprovals.length;
+  const notificationCount = dueToday.length + pendingApprovals.length + unreadUserNotifs.length;
+
+  async function handleMarkAllRead() {
+    await markNotificationsReadFn({ data: {} });
+    queryClient.invalidateQueries({ queryKey: BOOTSTRAP_QUERY_KEY });
+  }
+
+  async function handleMarkRead(id: string) {
+    await markNotificationsReadFn({ data: { notificationId: id } });
+    queryClient.invalidateQueries({ queryKey: BOOTSTRAP_QUERY_KEY });
+  }
 
   function personName(id: string) {
     return people.find((p) => p.id === id)?.name ?? "—";
@@ -201,16 +227,101 @@ export function TopBar() {
               )}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-88 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-2 py-1.5">
+              <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+              {unreadUserNotifs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMarkAllRead}
+                  className="text-[11px] font-medium text-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <CheckCheck className="h-3 w-3" /> Mark all read
+                </button>
+              )}
+            </div>
             <DropdownMenuSeparator />
             {notificationCount === 0 ? (
               <div className="px-2 py-4 text-center text-[12.5px] text-muted-foreground">
                 You're all caught up.
               </div>
             ) : (
-              <>
-                {pendingApprovals.slice(0, 4).map((request) => (
+              <div className="space-y-1 py-1">
+                {userNotifications.slice(0, 6).map((notif: any) => {
+                  const details: string[] = notif.detailsJson ? JSON.parse(notif.detailsJson) : [];
+                  const isExpanded = expandedNotifId === notif.id;
+
+                  const isWarning = notif.status === "warning";
+                  const isSuccess = notif.status === "success";
+
+                  const containerStyle = !notif.isRead
+                    ? isWarning
+                      ? "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-200"
+                      : isSuccess
+                        ? "bg-blue-500/10 border-blue-500/30 text-blue-950 dark:text-blue-200"
+                        : "bg-blue-500/5 border-blue-500/20 text-blue-950 dark:text-blue-200"
+                    : "bg-surface-2/40 border-border text-foreground";
+
+                  const iconColor = isWarning
+                    ? "text-amber-600"
+                    : isSuccess
+                      ? "text-blue-600"
+                      : "text-blue-600";
+
+                  return (
+                    <div
+                      key={notif.id}
+                      onClick={() => {
+                        if (!notif.isRead) handleMarkRead(notif.id);
+                        if (details.length > 0) setExpandedNotifId(isExpanded ? null : notif.id);
+                      }}
+                      className={`p-2.5 rounded-xl border text-left cursor-pointer transition ${containerStyle}`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className={`p-1.5 rounded-lg bg-background/80 shadow-xs ${iconColor}`}>
+                          <Shield className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[12.5px] font-semibold tracking-tight">
+                              {notif.title}
+                            </span>
+                            {!notif.isRead && (
+                              <span className="h-1.5 w-1.5 rounded-full bg-accent shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-[11.5px] opacity-90 mt-0.5 leading-snug">
+                            {notif.message}
+                          </p>
+
+                          {details.length > 0 && (
+                            <div className="mt-2 space-y-1 pt-1.5 border-t border-border/40">
+                              {details.map((item, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`text-[11px] font-medium ${
+                                    item.startsWith("✓") ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"
+                                  }`}
+                                >
+                                  {item}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="text-[10px] text-muted-foreground mt-1.5">
+                            {new Date(notif.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {pendingApprovals.slice(0, 3).map((request) => (
                   <DropdownMenuItem
                     key={request.id}
                     onClick={() => goTo("/leave")}
@@ -225,7 +336,7 @@ export function TopBar() {
                     </span>
                   </DropdownMenuItem>
                 ))}
-                {dueToday.slice(0, 4).map((task) => (
+                {dueToday.slice(0, 3).map((task) => (
                   <DropdownMenuItem
                     key={task.id}
                     onClick={() => goTo("/tasks")}
@@ -235,7 +346,7 @@ export function TopBar() {
                     <span className="text-[11px] text-muted-foreground">Due {task.dueDate}</span>
                   </DropdownMenuItem>
                 ))}
-              </>
+              </div>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

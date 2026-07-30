@@ -5,6 +5,7 @@ import { Check, RotateCcw, X } from "lucide-react";
 import { AppShell } from "@/components/shell/AppShell";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useAuth } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { useWorkspace, clientsPendingApproval } from "@/lib/workspace";
 import type { ClientRecord } from "@/lib/workspace";
 import { Button } from "@/components/ui/button";
@@ -41,13 +42,13 @@ import {
 } from "@/lib/client-visibility";
 
 function ClientApprovalsPage() {
-  const { user } = useAuth();
+  const { user, userPermissions } = useAuth();
   const { clients, decideClientApproval, openClient360 } = useWorkspace();
   const [action, setAction] = useState<{ client: ClientRecord; decision: Decision } | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const canApprove = canApproveClient(user);
+  const canApprove = canApproveClient(user, null, userPermissions);
   const noteRequired = action?.decision !== "Approved";
   const noteMissing = noteRequired && !note.trim();
 
@@ -81,6 +82,17 @@ function ClientApprovalsPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (userPermissions && Object.keys(userPermissions).length > 0 && !hasPermission(userPermissions, "client.view")) {
+    return (
+      <AppShell>
+        <div className="p-12 text-center">
+          <h2 className="text-xl font-bold text-destructive">403 — Access Denied</h2>
+          <p className="text-sm text-muted-foreground mt-2">You do not have permission to view Client Approvals.</p>
+        </div>
+      </AppShell>
+    );
   }
 
   return (
@@ -144,11 +156,11 @@ function ClientApprovalsPage() {
                       <StatusBadge status={c.recordStatus} />
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap space-x-1">
-                      {canApproveClient(user, c) ||
-                      canSendBackClient(user, c) ||
-                      canRejectClient(user, c) ? (
+                      {canApproveClient(user, c, userPermissions) ||
+                      canSendBackClient(user, c, userPermissions) ||
+                      canRejectClient(user, c, userPermissions) ? (
                         <>
-                          {canApproveClient(user, c) && (
+                          {canApproveClient(user, c, userPermissions) && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -158,7 +170,7 @@ function ClientApprovalsPage() {
                               <Check className="h-3.5 w-3.5" /> Approve
                             </Button>
                           )}
-                          {canSendBackClient(user, c) && (
+                          {canSendBackClient(user, c, userPermissions) && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -170,7 +182,7 @@ function ClientApprovalsPage() {
                               <RotateCcw className="h-3.5 w-3.5" /> Send back
                             </Button>
                           )}
-                          {canRejectClient(user, c) && (
+                          {canRejectClient(user, c, userPermissions) && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -182,7 +194,7 @@ function ClientApprovalsPage() {
                           )}
                         </>
                       ) : (
-                        <span className="text-[12px] text-muted-foreground">View only</span>
+                        <span className="text-xs text-muted-foreground">View only</span>
                       )}
                     </TableCell>
                   </TableRow>

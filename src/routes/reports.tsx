@@ -24,7 +24,28 @@ const cards = [
   { title: "Pipeline coverage", value: "3.4×", delta: "Healthy", data: [10, 20, 18, 30, 40, 38, 50, 55, 60, 65, 68, 75] },
 ];
 
+import { useAuth } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
+
 function ReportsPage() {
+  const { userPermissions } = useAuth();
+  const canViewReports = hasPermission(userPermissions, "reports.view");
+
+  if (!canViewReports) {
+    return (
+      <AppShell>
+        <div className="p-8">
+          <div className="rounded-2xl border border-border bg-elevated p-8 text-center">
+            <h2 className="text-lg font-semibold">Access Restricted</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              You do not have permission to view the Reports Center. Please contact your System Administrator.
+            </p>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <PageHeader

@@ -4,9 +4,10 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { leaveRequests } from "../db/schema";
 import { getSessionPersonId } from "./session";
-import { findPersonById, loadLeaveRequests } from "./repo";
+import { findPersonById, loadLeaveRequests, loadUserPermissionsMap } from "./repo";
 import { generateId } from "./mappers";
 import type { LeaveRequest } from "../lib/workspace";
+import { hasPermission } from "../lib/permissions";
 
 async function requireCurrentUser() {
   const personId = await getSessionPersonId();
@@ -26,6 +27,12 @@ export const requestLeaveFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
+
+    const userPermissions = await loadUserPermissionsMap(user.designationId, user.designationId);
+    if (!hasPermission(userPermissions, "leave.apply")) {
+      return { ok: false as const, error: "Forbidden: You do not have permission to apply for leave." };
+    }
+
     if (!user.managerId)
       return { ok: false as const, error: "There's no manager above you to approve leave." };
     if (data.endDate < data.startDate) {
@@ -55,6 +62,12 @@ export const decideLeaveFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
+
+    const userPermissions = await loadUserPermissionsMap(user.designationId, user.designationId);
+    const permKey = data.decision === "approved" ? "leave.approve" : "leave.reject";
+    if (!hasPermission(userPermissions, permKey)) {
+      return { ok: false as const, error: `Forbidden: You do not have permission to ${data.decision} leave requests.` };
+    }
 
     const allRequests = await loadLeaveRequests();
     const request = allRequests.find((r: LeaveRequest) => r.id === data.id);

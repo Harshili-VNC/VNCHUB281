@@ -4,10 +4,11 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { tasks } from "../db/schema";
 import { getSessionPersonId } from "./session";
-import { findPersonById, loadPeople, loadTasks } from "./repo";
+import { findPersonById, loadPeople, loadTasks, loadUserPermissionsMap } from "./repo";
 import { generateId } from "./mappers";
 import { getDirectReports } from "../lib/hierarchy";
 import type { Task } from "../lib/workspace";
+import { hasPermission } from "../lib/permissions";
 
 async function requireCurrentUser() {
   const personId = await getSessionPersonId();
@@ -29,6 +30,11 @@ export const addTaskFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireCurrentUser();
     if (!user) return { ok: false as const, error: "You must be signed in." };
+
+    const userPermissions = await loadUserPermissionsMap(user.designationId, user.designationId);
+    if (!hasPermission(userPermissions, "task.create")) {
+      return { ok: false as const, error: "Forbidden: You do not have permission to create tasks." };
+    }
 
     const title = data.title.trim();
     if (!title) return { ok: false as const, error: "Give the task a title." };

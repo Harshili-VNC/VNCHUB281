@@ -84,6 +84,7 @@ import {
   canAssignTeamLead,
   canManageDeliveryTeam,
 } from "@/lib/client-visibility";
+import { hasPermission } from "@/lib/permissions";
 
 export const Route = createFileRoute("/clients")({
   head: () => ({
@@ -354,7 +355,7 @@ function getFirstInvalidSection(f: ClientFormType): { tab: FormTab; error: strin
 }
 
 function ClientsPage() {
-  const { user, people } = useAuth();
+  const { user, userPermissions, people } = useAuth();
   const {
     clients,
     addClient,
@@ -731,6 +732,17 @@ function ClientsPage() {
     toast.success(`Exported ${result.rowCount} clients`);
   }
 
+  if (userPermissions && Object.keys(userPermissions).length > 0 && !hasPermission(userPermissions, "client.view")) {
+    return (
+      <AppShell>
+        <div className="p-12 text-center">
+          <h2 className="text-xl font-bold text-destructive">403 — Access Denied</h2>
+          <p className="text-sm text-muted-foreground mt-2">You do not have permission to view Client Master records.</p>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="px-8 pt-8 pb-4">
@@ -747,10 +759,12 @@ function ClientsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={exportCsv}>
-              <Download className="h-3.5 w-3.5" /> Export
-            </Button>
-            {canCreateClient(user) && (
+            {hasPermission(userPermissions, "client.export") && (
+              <Button variant="outline" size="sm" onClick={exportCsv}>
+                <Download className="h-3.5 w-3.5" /> Export
+              </Button>
+            )}
+            {canCreateClient(user, userPermissions) && (
               <Button size="sm" onClick={openNew}>
                 <Plus className="h-3.5 w-3.5" /> New client master
               </Button>
@@ -865,26 +879,26 @@ function ClientsPage() {
                         )}
                     </TableCell>
                     <TableCell className="text-right space-x-1 whitespace-nowrap">
-                      {canEditCompanyInfo(user, c) && (
+                      {canEditCompanyInfo(user, c, userPermissions) && (
                         <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>
                           Edit
                         </Button>
                       )}
-                      {canSubmitClient(user, c) &&
+                      {canSubmitClient(user, c, userPermissions) &&
                       (c.recordStatus === "Draft" ||
                         c.recordStatus === "Sent Back for Correction") ? (
                         <Button variant="ghost" size="sm" onClick={() => submit(c)}>
                           <SendHorizonal className="h-3.5 w-3.5" /> Submit
                         </Button>
                       ) : null}
-                      {canAssignTeamLead(user, c) &&
+                      {canAssignTeamLead(user, c, userPermissions) &&
                       !c.teamLeadId &&
                       c.recordStatus === "Approved" ? (
                         <Button variant="ghost" size="sm" onClick={() => setOwnershipClient(c)}>
                           <UsersRound className="h-3.5 w-3.5" /> Assign Team Lead
                         </Button>
                       ) : null}
-                      {canManageDeliveryTeam(user, c) && c.recordStatus === "Approved" ? (
+                      {canManageDeliveryTeam(user, c, userPermissions) && c.recordStatus === "Approved" ? (
                         <Button variant="ghost" size="sm" onClick={() => setOwnershipClient(c)}>
                           <UsersRound className="h-3.5 w-3.5" /> Manage Team
                         </Button>

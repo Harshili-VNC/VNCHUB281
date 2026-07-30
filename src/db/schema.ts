@@ -7,7 +7,7 @@
 // validation that used to run against localStorage. This keeps the schema
 // simple and avoids self-referencing FK edge cases.
 
-import { pgEnum, pgTable, text, timestamp, date, integer, boolean, index, type AnyPgColumn } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, timestamp, date, integer, boolean, index, uniqueIndex, type AnyPgColumn } from "drizzle-orm/pg-core";
 
 // Employee Module spec v1.1, Section 3: Role and Organization Mapping.
 export const departmentFunctionEnum = pgEnum("department_function", [
@@ -705,3 +705,65 @@ export const clientHistory = pgTable("client_history", {
   changedBy: text("changed_by").notNull(),
   changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ---------------------------------------------------------------------------
+// Enterprise Permission Management Module
+// ---------------------------------------------------------------------------
+
+export const permissions = pgTable("permissions", {
+  id: text("id").primaryKey(),
+  category: text("category").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const designationPermissions = pgTable(
+  "designation_permissions",
+  {
+    id: text("id").primaryKey(),
+    designationId: text("designation_id").notNull().references(() => designations.id, { onDelete: "cascade" }),
+    permissionId: text("permission_id").notNull().references(() => permissions.id, { onDelete: "cascade" }),
+    isEnabled: boolean("is_enabled").notNull().default(false),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("idx_desig_perm_unique").on(table.designationId, table.permissionId),
+    index("idx_desig_perm_desig_id").on(table.designationId),
+    index("idx_desig_perm_perm_id").on(table.permissionId),
+  ],
+);
+
+export const permissionAuditLogs = pgTable("permission_audit_logs", {
+  id: text("id").primaryKey(),
+  changedBy: text("changed_by").notNull(),
+  changedByName: text("changed_by_name").notNull(),
+  designationId: text("designation_id").notNull(),
+  designationName: text("designation_name").notNull(),
+  permissionId: text("permission_id").notNull(),
+  permissionName: text("permission_name").notNull(),
+  previousValue: boolean("previous_value").notNull(),
+  newValue: boolean("new_value").notNull(),
+  ipAddress: text("ip_address"),
+  changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userNotifications = pgTable(
+  "user_notifications",
+  {
+    id: text("id").primaryKey(),
+    personId: text("person_id").notNull(),
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    type: text("type").notNull().default("permission_update"),
+    status: text("status").notNull().default("warning"),
+    detailsJson: text("details_json"),
+    isRead: boolean("is_read").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_user_notif_person_id").on(table.personId),
+    index("idx_user_notif_is_read").on(table.isRead),
+  ]
+);
+

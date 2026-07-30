@@ -1,7 +1,7 @@
 import "@tanstack/react-start/server-only";
 // Server-only. Thin data-access layer over Drizzle.
 
-import { eq } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { db } from "../db/client";
 import {
   people,
@@ -35,6 +35,10 @@ import {
   employeeProjectHistory,
   employeeCompensationHistory,
   clientHistory,
+  permissions,
+  designationPermissions,
+  permissionAuditLogs,
+  userNotifications,
 } from "../db/schema";
 import {
   toPerson,
@@ -408,3 +412,357 @@ export async function loadClientHistory(clientId: string) {
   const rows = await db.select().from(clientHistory).where(eq(clientHistory.clientId, clientId));
   return rows.sort((a, b) => b.changedAt.getTime() - a.changedAt.getTime()).map(toClientHistory);
 }
+
+// ---------------------------------------------------------------------------
+// Enterprise Permission Data Access (Server-Only)
+// ---------------------------------------------------------------------------
+
+import { ALL_PERMISSIONS, getDefaultPermissionsForDesignation } from "../lib/permissions";
+
+export async function loadUserPermissionsMap(
+  designationId: string | null | undefined,
+  designationName?: string | null
+): Promise<Record<string, boolean>> {
+  try {
+    // 1. Direct query by designationId if provided
+    if (designationId) {
+      const rows = await db
+        .select()
+        .from(designationPermissions)
+        .where(eq(designationPermissions.designationId, designationId));
+
+      if (rows.length > 0) {
+        const map: Record<string, boolean> = {};
+        for (const r of rows) {
+          map[r.permissionId] = r.isEnabled;
+        }
+        return map;
+      }
+    }
+
+    // 2. Query designations table to resolve ID by designationName / designationId string
+    const targetSearch = designationName || designationId;
+    if (targetSearch) {
+      const allDesigs = await db.select().from(designations);
+      const matchedDesig = allDesigs.find(
+        (d) =>
+          d.id === designationId ||
+          d.name.toLowerCase() === targetSearch.toLowerCase()
+      );
+
+      if (matchedDesig) {
+        const rows = await db
+          .select()
+          .from(designationPermissions)
+          .where(eq(designationPermissions.designationId, matchedDesig.id));
+
+        if (rows.length > 0) {
+          const map: Record<string, boolean> = {};
+          for (const r of rows) {
+            map[r.permissionId] = r.isEnabled;
+          }
+          return map;
+        }
+      }
+    }
+
+    // 3. Fallback to default system permissions for designation name
+    return getDefaultPermissionsForDesignation(designationName || designationId || "Employee");
+  } catch (err) {
+    console.error("Failed to load user permissions map:", err);
+    return getDefaultPermissionsForDesignation(designationName || designationId || "Employee");
+  }
+}
+
+export async function loadPermissionMatrixData() {
+  const desigList = await db.select().from(designations);
+  const rawDP = await db.select().from(designationPermissions);
+
+  const matrix: Record<string, Record<string, boolean>> = {};
+
+  for (const d of desigList) {
+    matrix[d.id] = getDefaultPermissionsForDesignation(d.name || d.id);
+  }
+
+  for (const row of rawDP) {
+    if (!matrix[row.designationId]) {
+      matrix[row.designationId] = {};
+    }
+    matrix[row.designationId][row.permissionId] = row.isEnabled;
+  }
+
+  return {
+    designations: desigList,
+    permissions: ALL_PERMISSIONS,
+    matrix,
+  };
+}
+
+export async function loadPermissionAuditLogsList() {
+  const logs = await db
+    .select()
+    .from(permissionAuditLogs)
+    .orderBy(desc(permissionAuditLogs.changedAt))
+    .limit(100);
+
+  return logs;
+}
+
+export async function savePermissionChangesInRepo(
+  userId: string,
+  userName: string,
+  changes: Array<{ designationId: string; permissionId: string; isEnabled: boolean }>
+) {
+  const desigList = await db.select().from(designations);
+  const desigMap = new Map(desigList.map((d) => [d.id, d.name]));
+  const permMap = new Map(ALL_PERMISSIONS.map((p) => [p.id, p.name]));
+
+  // Lockout prevention check
+  const adminDesigs = desigList.filter(
+    (d) =>
+      d.name.toLowerCase().includes("admin") ||
+      d.name.toLowerCase().includes("ceo") ||
+      d.name.toLowerCase().includes("managing director")
+  );
+
+  for (const change of changes) {
+    if (change.permissionId === "system.manage_permissions" && !change.isEnabled) {
+      const desigName = desigMap.get(change.designationId)?.toLowerCase() || "";
+      const isAdminRole = desigName.includes("admin") || desigName.includes("ceo") || desigName.includes("managing director");
+
+      if (isAdminRole) {
+        const otherAdmins = adminDesigs.filter((d) => d.id !== change.designationId);
+        let remainingAdmins = 0;
+
+        for (const other of otherAdmins) {
+          const existing = await db
+            .select()
+            .from(designationPermissions)
+            .where(
+              and(
+                eq(designationPermissions.designationId, other.id),
+                eq(designationPermissions.permissionId, "system.manage_permissions")
+              )
+            );
+          if (existing.length === 0 || existing[0].isEnabled) {
+            remainingAdmins++;
+          }
+        }
+
+        if (remainingAdmins === 0) {
+          throw new Error(
+            "Security Lockout Rejected: Cannot remove 'Manage Permissions' from the last active Administrator role."
+          );
+        }
+      }
+    }
+  }
+
+  let savedCount = 0;
+  const changesByDesig = new Map<string, Array<{ permissionId: string; permissionName: string; isEnabled: boolean; previousValue: boolean }>>();
+
+  for (const change of changes) {
+    const existing = await db
+      .select()
+      .from(designationPermissions)
+      .where(
+        and(
+          eq(designationPermissions.designationId, change.designationId),
+          eq(designationPermissions.permissionId, change.permissionId)
+        )
+      );
+
+    const previousValue = existing.length > 0 ? existing[0].isEnabled : (getDefaultPermissionsForDesignation(change.designationId)[change.permissionId] ?? false);
+
+    if (previousValue === change.isEnabled) {
+      continue;
+    }
+
+    const desigName = desigMap.get(change.designationId) || change.designationId;
+    const permName = permMap.get(change.permissionId) || change.permissionId;
+
+    if (existing.length > 0) {
+      await db
+        .update(designationPermissions)
+        .set({ isEnabled: change.isEnabled, updatedAt: new Date() })
+        .where(eq(designationPermissions.id, existing[0].id));
+    } else {
+      await db.insert(designationPermissions).values({
+        id: `dp-${change.designationId}-${change.permissionId}`,
+        designationId: change.designationId,
+        permissionId: change.permissionId,
+        isEnabled: change.isEnabled,
+      });
+    }
+
+    await db.insert(permissionAuditLogs).values({
+      id: generateId("p-audit"),
+      changedBy: userId,
+      changedByName: userName,
+      designationId: change.designationId,
+      designationName: desigName,
+      permissionId: change.permissionId,
+      permissionName: permName,
+      previousValue,
+      newValue: change.isEnabled,
+    });
+
+    if (!changesByDesig.has(change.designationId)) {
+      changesByDesig.set(change.designationId, []);
+    }
+    changesByDesig.get(change.designationId)!.push({
+      permissionId: change.permissionId,
+      permissionName: permName,
+      isEnabled: change.isEnabled,
+      previousValue,
+    });
+
+    savedCount++;
+  }
+
+  // Generate In-App Permission Change Notifications for Affected Active Employees
+  if (savedCount > 0) {
+    const allPeopleRows = await db.select().from(people).where(eq(people.status, "active"));
+
+    for (const [desigId, desigChanges] of changesByDesig.entries()) {
+      const desigName = desigMap.get(desigId) || desigId;
+      const affectedEmployees = allPeopleRows.filter(
+        (p) => p.designationId === desigId
+      );
+
+      if (affectedEmployees.length === 0) continue;
+
+      let title = "Permission Updated";
+      let message = "Your system permissions have been updated.";
+      let status = "info";
+      let detailsJson: string | null = null;
+
+      if (desigChanges.length === 1) {
+        const item = desigChanges[0];
+        if (item.isEnabled) {
+          title = "Permission Updated";
+          message = `Your permission to ${item.permissionName} has been enabled by the system administrator.`;
+          status = "success";
+        } else {
+          title = "Permission Updated";
+          message = `Your permission to ${item.permissionName} has been removed by the system administrator.`;
+          status = "warning";
+        }
+      } else {
+        title = "Permissions Updated";
+        message = "Your system permissions have been updated. Click to view changes.";
+        const details = desigChanges.map((c) =>
+          c.isEnabled ? `✓ ${c.permissionName} Enabled` : `✕ ${c.permissionName} Disabled`
+        );
+        detailsJson = JSON.stringify(details);
+
+        const allEnabled = desigChanges.every((c) => c.isEnabled);
+        const allDisabled = desigChanges.every((c) => !c.isEnabled);
+        if (allEnabled) status = "success";
+        else if (allDisabled) status = "warning";
+        else status = "info"; // Neutral Blue for mixed state
+      }
+
+      // Batch insert ONE notification per affected employee
+      for (const emp of affectedEmployees) {
+        await db.insert(userNotifications).values({
+          id: generateId("notif"),
+          personId: emp.id,
+          title,
+          message,
+          type: "permission_update",
+          status,
+          detailsJson,
+          isRead: false,
+        });
+      }
+    }
+  }
+
+  return savedCount;
+}
+
+export async function loadUserNotifications(personId: string) {
+  const rows = await db
+    .select()
+    .from(userNotifications)
+    .where(eq(userNotifications.personId, personId))
+    .orderBy(desc(userNotifications.createdAt))
+    .limit(50);
+
+  return rows;
+}
+
+export async function markUserNotificationsRead(personId: string, notificationId?: string) {
+  if (notificationId) {
+    await db
+      .update(userNotifications)
+      .set({ isRead: true })
+      .where(and(eq(userNotifications.id, notificationId), eq(userNotifications.personId, personId)));
+  } else {
+    await db
+      .update(userNotifications)
+      .set({ isRead: true })
+      .where(and(eq(userNotifications.personId, personId), eq(userNotifications.isRead, false)));
+  }
+}
+
+export async function resetPermissionDefaultsInRepo(userId: string, userName: string, designationId?: string) {
+  const desigList = await db.select().from(designations);
+  const targetDesigs = designationId
+    ? desigList.filter((d) => d.id === designationId)
+    : desigList;
+
+  let resetCount = 0;
+
+  for (const desig of targetDesigs) {
+    const defaults = getDefaultPermissionsForDesignation(desig.name || desig.id);
+    for (const p of ALL_PERMISSIONS) {
+      const defaultVal = defaults[p.id] ?? false;
+
+      const existing = await db
+        .select()
+        .from(designationPermissions)
+        .where(
+          and(
+            eq(designationPermissions.designationId, desig.id),
+            eq(designationPermissions.permissionId, p.id)
+          )
+        );
+
+      const currentVal = existing.length > 0 ? existing[0].isEnabled : false;
+      if (currentVal !== defaultVal) {
+        if (existing.length > 0) {
+          await db
+            .update(designationPermissions)
+            .set({ isEnabled: defaultVal, updatedAt: new Date() })
+            .where(eq(designationPermissions.id, existing[0].id));
+        } else {
+          await db.insert(designationPermissions).values({
+            id: `dp-${desig.id}-${p.id}`,
+            designationId: desig.id,
+            permissionId: p.id,
+            isEnabled: defaultVal,
+          });
+        }
+
+        await db.insert(permissionAuditLogs).values({
+          id: generateId("p-audit"),
+          changedBy: userId,
+          changedByName: userName,
+          designationId: desig.id,
+          designationName: desig.name,
+          permissionId: p.id,
+          permissionName: p.name,
+          previousValue: currentVal,
+          newValue: defaultVal,
+        });
+
+        resetCount++;
+      }
+    }
+  }
+
+  return resetCount;
+}
+

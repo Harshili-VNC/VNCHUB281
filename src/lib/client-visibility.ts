@@ -35,72 +35,75 @@ export function isFinanceOrMarketingHead(user: Person | null): boolean {
   return role === "Finance Head" || role === "Marketing Head";
 }
 
-export function canCreateClient(user: Person | null): boolean {
-  return _canCreateClient(user);
+export function canCreateClient(user: Person | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canCreateClient(user, userPermissions);
 }
 
-export function canEditClient(user: Person | null, client: ClientRecord | null): boolean {
-  return _canEditClient(user, client);
+export function canEditClient(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canEditClient(user, client, userPermissions);
 }
 
-export function canEditCompanyInfo(user: Person | null, client: ClientRecord | null): boolean {
-  return _canEditCompanyInformation(user, client);
+export function canEditCompanyInfo(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canEditCompanyInformation(user, client, userPermissions);
 }
 
-export function canSubmitClient(user: Person | null, client: ClientRecord | null): boolean {
-  return _canSubmitClient(user, client);
+export function canSubmitClient(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canSubmitClient(user, client, userPermissions);
 }
 
-export function canApproveClient(user: Person | null, client?: ClientRecord | null): boolean {
-  return _canApproveClient(user, client ?? null);
+export function canApproveClient(user: Person | null, client?: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canApproveClient(user, client ?? null, userPermissions);
 }
 
-export function canRejectClient(user: Person | null, client?: ClientRecord | null): boolean {
-  return _canRejectClient(user, client ?? null);
+export function canRejectClient(user: Person | null, client?: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canRejectClient(user, client ?? null, userPermissions);
 }
 
-export function canSendBackClient(user: Person | null, client?: ClientRecord | null): boolean {
-  return _canSendBackClient(user, client ?? null);
+export function canSendBackClient(user: Person | null, client?: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canSendBackClient(user, client ?? null, userPermissions);
 }
 
-export function canViewClient(user: Person | null, client: ClientRecord | null): boolean {
-  return _canViewClient(user, client);
+export function canViewClient(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canViewClient(user, client, userPermissions);
 }
 
-export function canOpenClient360(user: Person | null, client: ClientRecord | null): boolean {
-  return _canOpenClient360(user, client);
+export function canOpenClient360(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canOpenClient360(user, client, userPermissions);
 }
 
-export function canManageTeam(user: Person | null, client: ClientRecord | null): boolean {
-  return _canAssignTeamLead(user, client) || _canManageDeliveryTeam(user, client);
+export function canManageTeam(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canAssignTeamLead(user, client, userPermissions) || _canManageDeliveryTeam(user, client, userPermissions);
 }
 
-export function canAssignTeamLead(user: Person | null, client: ClientRecord | null): boolean {
-  return _canAssignTeamLead(user, client);
+export function canAssignTeamLead(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canAssignTeamLead(user, client, userPermissions);
 }
 
-export function canManageDeliveryTeam(user: Person | null, client: ClientRecord | null): boolean {
-  return _canManageDeliveryTeam(user, client);
+export function canManageDeliveryTeam(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canManageDeliveryTeam(user, client, userPermissions);
 }
 
-export function canManageClientMaster(user: Person | null): boolean {
+export function canManageClientMaster(user: Person | null, userPermissions?: Record<string, boolean>): boolean {
+  if (userPermissions && Object.keys(userPermissions).length > 0) {
+    return _canCreateClient(user, userPermissions) || _canEditClient(user, null, userPermissions);
+  }
   const role = getClientRole(user);
   return role === "Finance Head" || role === "Marketing Head" || role === "Business Unit Head";
 }
 
-export function canViewSensitiveClientData(user: Person | null): boolean {
-  return _canViewCommercialInformation(user);
+export function canViewSensitiveClientData(user: Person | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canViewCommercialInformation(user, userPermissions);
 }
 
-export function filterClientsByRole(clients: ClientRecord[], user: Person | null): ClientRecord[] {
+export function filterClientsByRole(clients: ClientRecord[], user: Person | null, userPermissions?: Record<string, boolean>): ClientRecord[] {
   if (!user) return [];
-  return clients.filter((c) => _canViewClient(user, c));
+  return clients.filter((c) => _canViewClient(user, c, userPermissions));
 }
 
-export function canRaiseChangeRequest(user: Person | null, client: ClientRecord | null): boolean {
-  return _canRaiseChangeRequest(user, client);
+export function canRaiseChangeRequest(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canRaiseChangeRequest(user, client, userPermissions);
 }
 
-export function canApproveChangeRequest(user: Person | null, client: ClientRecord | null): boolean {
-  return _canApproveChangeRequest(user, client);
+export function canApproveChangeRequest(user: Person | null, client: ClientRecord | null, userPermissions?: Record<string, boolean>): boolean {
+  return _canApproveChangeRequest(user, client, userPermissions);
 }

@@ -11,9 +11,24 @@ export const Route = createFileRoute("/import-history")({
   component: ImportHistoryPage,
 });
 
+import { useAuth } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
+
 function ImportHistoryPage() {
+  const { userPermissions } = useAuth();
   const { importJobs } = useWorkspace();
   const sorted = [...importJobs].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+
+  if (userPermissions && Object.keys(userPermissions).length > 0 && !hasPermission(userPermissions, "client.view") && !hasPermission(userPermissions, "system.import_data")) {
+    return (
+      <AppShell>
+        <div className="p-12 text-center">
+          <h2 className="text-xl font-bold text-destructive">403 — Access Denied</h2>
+          <p className="text-sm text-muted-foreground mt-2">You do not have permission to view Import History.</p>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

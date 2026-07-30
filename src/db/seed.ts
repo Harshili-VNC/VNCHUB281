@@ -7,6 +7,7 @@ import { config as loadEnv } from "dotenv";
 loadEnv();
 import { db, queryClient } from "./client";
 import { departments, designations, designationLevels } from "./schema";
+import { seedPermissionsData } from "./seed-permissions";
 
 // --- Production Master Data: Departments ---
 const departmentsToInsert = [
@@ -67,6 +68,8 @@ async function main() {
     .onConflictDoNothing({ target: designations.id });
 
   console.log("Done: Production Master Data seeded successfully.");
+
+  await seedPermissionsData();
 }
 
 main()
