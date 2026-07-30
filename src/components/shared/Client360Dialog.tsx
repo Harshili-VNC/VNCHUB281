@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Building2,
   MapPin,
@@ -16,6 +17,7 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  Pencil,
 } from "lucide-react";
 import {
   Dialog,
@@ -27,8 +29,9 @@ import {
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useAuth } from "@/lib/auth";
 import { useWorkspace, type ClientRecord, type ClientAccount } from "@/lib/workspace";
-import { canViewSensitiveClientData } from "@/lib/client-visibility";
+import { canViewSensitiveClientData, canEditCompanyInfo } from "@/lib/client-visibility";
 import { getCountryByName, parsePhoneNumber } from "@/lib/country-data";
+import { Button } from "@/components/ui/button";
 
 interface Client360DialogProps {
   client: ClientRecord | null;
@@ -48,6 +51,7 @@ type TabKey =
 
 export function Client360Dialog({ client, open, onClose }: Client360DialogProps) {
   const { user, people } = useAuth();
+  const navigate = useNavigate();
   const { clientChangeRequests, getClientAccounts, getClientSoftwareStacks, getClientHistory } =
     useWorkspace();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
@@ -132,6 +136,31 @@ export function Client360Dialog({ client, open, onClose }: Client360DialogProps)
                 </span>
               </div>
             </div>
+            {/* Edit option in Client360 — previously this popup had no edit
+                capability at all, only the Client List's Actions column
+                did. Reuses the exact same canEditCompanyInfo permission
+                check as that button (currently: Finance Head or Marketing
+                Head, only for records they created/last touched, only
+                while Draft or Sent Back for Correction) — no permission
+                scope was changed, this just exposes the existing
+                capability in a second place. Navigates to the Client List
+                route with ?edit=<id>, since the edit form's state lives
+                locally in that route, not in this globally-rendered
+                dialog. */}
+            {canEditCompanyInfo(user, client) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => {
+                  const id = client.id;
+                  onClose();
+                  navigate({ to: "/clients", search: { edit: id } });
+                }}
+              >
+                <Pencil className="h-3.5 w-3.5" /> Edit
+              </Button>
+            )}
           </div>
         </DialogHeader>
 

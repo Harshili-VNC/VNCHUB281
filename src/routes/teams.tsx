@@ -260,7 +260,8 @@ function EmployeeProfileModal({ person, onClose }: { person: Person | null; onCl
             <div>
               <DialogTitle className="text-xl">{person.name}</DialogTitle>
               <DialogDescription className="text-xs">
-                {person.employeeCode} · {person.designation ?? person.departmentFunction} ({person.department})
+                {/* CHANGE 12: Hide designation on Projects tab — shown on all other tabs */}
+                {person.employeeCode}{tab !== "projects" && ` · ${person.designation ?? person.departmentFunction}`}{tab !== "projects" && ` (${person.department})`}
               </DialogDescription>
             </div>
           </div>
@@ -413,8 +414,9 @@ function EmployeeProfileModal({ person, onClose }: { person: Person | null; onCl
           <div className="space-y-2 pt-2 text-xs">
             <p className="text-muted-foreground">Assigned Client Projects & Work History:</p>
             <div className="p-3 rounded-xl border border-border bg-surface-2">
+              {/* CHANGE 12: Role/designation hidden from project display per spec */}
               <div className="font-semibold text-foreground">Acme Corp (C-001)</div>
-              <div className="text-muted-foreground">Role: Senior Analyst · Active Assignment</div>
+              <div className="text-muted-foreground">Active Assignment</div>
             </div>
           </div>
         )}

@@ -201,6 +201,8 @@ export function toClient(row: ClientRow): ClientRecord {
     approvedBy: row.approvedBy,
     approvedAt: row.approvedAt,
     rejectionCorrectionNotes: row.rejectionCorrectionNotes,
+    deletedAt: row.deletedAt ? row.deletedAt.toISOString() : null,
+    deletedBy: row.deletedBy,
     businessUnitManagerId: row.businessUnitManagerId,
     teamLeadId: row.teamLeadId,
     assistantTeamLeadId: row.assistantTeamLeadId,

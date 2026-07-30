@@ -70,6 +70,8 @@ const primary: NavEntry[] = [
       { label: "Clients", icon: Building2, to: "/clients" },
       { label: "Client Approvals", icon: ClipboardCheck, to: "/client-approvals" },
       { label: "Change Requests", icon: FileEdit, to: "/client-change-requests" },
+      { label: "Client History", icon: History, to: "/client-history" },
+      { label: "Pending Renewal", icon: CalendarDays, to: "/pending-renewal" },
       { label: "Import Center", icon: Upload, to: "/import-center" },
       { label: "Import History", icon: Clock, to: "/import-history" },
       { label: "Export Center", icon: Download, to: "/export-center" },
@@ -114,6 +116,8 @@ const FULL_ACCESS = [
   "/clients",
   "/client-approvals",
   "/client-change-requests",
+  "/client-history",
+  "/pending-renewal",
   "/teams",
   "/employee-history",
   "/import-center",
@@ -152,7 +156,7 @@ function accessiblePages(person: {
   if (person.isBusinessUnitHead) return FULL_ACCESS;
 
   if (person.departmentFunction === "Finance" || person.departmentFunction === "Marketing") {
-    ["/clients", "/client-approvals", "/client-change-requests", "/import-center", "/import-history", "/export-center", "/reports"].forEach(
+    ["/clients", "/client-approvals", "/client-change-requests", "/client-history", "/pending-renewal", "/import-center", "/import-history", "/export-center", "/reports"].forEach(
       (p) => pages.add(p),
     );
   }

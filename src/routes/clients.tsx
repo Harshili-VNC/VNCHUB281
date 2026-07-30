@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Download,
@@ -18,9 +18,11 @@ import {
   AlertCircle,
   ArrowRight,
   ArrowLeft,
+  Trash2,
 } from "lucide-react";
 import { AppShell } from "@/components/shell/AppShell";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/lib/auth";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import {
@@ -83,10 +85,16 @@ import {
   canSubmitClient,
   canAssignTeamLead,
   canManageDeliveryTeam,
-  formatShortBUEntity,
+  canDeleteClient,
+  getShortBUName,
+  getShortEntityName,
+  getClientRole,
 } from "@/lib/client-visibility";
 
 export const Route = createFileRoute("/clients")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    edit: typeof search.edit === "string" ? search.edit : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Client Master · VNC Global" },
@@ -356,10 +364,13 @@ function getFirstInvalidSection(f: ClientFormType): { tab: FormTab; error: strin
 
 function ClientsPage() {
   const { user, people } = useAuth();
+  const navigate = useNavigate();
+  const { edit: editClientIdFromUrl } = Route.useSearch();
   const {
     clients,
     addClient,
     updateClient,
+    deleteClient,
     submitClientForReview,
     createExport,
     openClient360,
@@ -367,16 +378,63 @@ function ClientsPage() {
     getClientAccounts,
     getClientSoftwareStacks,
   } = useWorkspace();
+
+  // Bridges the globally-rendered Client360 popup (in workspace.tsx) to
+  // this route's local edit-form state — the popup has no direct access
+  // to openEdit()/setShowForm(), so it navigates here with ?edit=<id>
+  // instead. Runs once clients are loaded; clears the param after opening
+  // so refreshing the page doesn't re-trigger it, and does nothing if the
+  // user doesn't actually have edit permission for that client.
+  useEffect(() => {
+    if (!editClientIdFromUrl || clients.length === 0) return;
+    const target = clients.find((c) => c.id === editClientIdFromUrl);
+    if (target && canEditCompanyInfo(user, target)) {
+      openEdit(target);
+    }
+    navigate({ to: "/clients", search: {}, replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editClientIdFromUrl, clients]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState(ALL);
   const [recordStatus, setRecordStatus] = useState(ALL);
   const [bu, setBu] = useState(ALL);
+  // PART 2: Contract filter — "All contracts" default, plus Renewal /
+  // Auto Recurring (mapped to the existing contractType field) and two
+  // date-computed "expiring soon" windows based on contractRenewalDate.
+  const [contractFilter, setContractFilter] = useState(ALL);
   const [showForm, setShowForm] = useState(false);
   const [activeFormTab, setActiveFormTab] = useState<FormTab>("identity");
   const [editing, setEditing] = useState<ClientRecord | null>(null);
   const [form, setForm] = useState(emptyForm());
   const [saving, setSaving] = useState(false);
   const [ownershipClient, setOwnershipClient] = useState<ClientRecord | null>(null);
+
+  // CHANGE 6: Auto-populate primary account fields from client form when
+  // navigating to the accounts tab for a NEW client (editing = null).
+  // Existing clients always load from DB (openEdit), so this only fires
+  // for fresh records. Users may override any pre-filled value.
+  useEffect(() => {
+    if (activeFormTab !== "accounts" || editing) return;
+    setForm((prev) => ({
+      ...prev,
+      accounts: prev.accounts.map((acc) => {
+        if (!acc.isPrimaryAccount) return acc;
+        return {
+          ...acc,
+          billingEntity: acc.billingEntity || prev.billingEntity,
+          currency: acc.currency || prev.currency,
+          // Pre-fill address fields so they're ready when user unchecks "Use Company Address"
+          addressLine1: acc.addressLine1 || prev.clientAddressLine1,
+          addressLine2: acc.addressLine2 || prev.clientAddressLine2,
+          country: acc.country || prev.clientCountry,
+          stateOrRegion: acc.stateOrRegion || prev.clientStateOrRegion,
+          city: acc.city || prev.clientCity,
+          zipOrPinCode: acc.zipOrPinCode || prev.clientZipOrPin,
+        };
+      }),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFormTab]);
 
   // Smart Address & International Phone datasets
   const allCountries = useMemo(() => getAllCountries(), []);
@@ -465,22 +523,76 @@ function ClientsPage() {
     setActiveFormTab(targetTab);
   }
 
+  // CHANGE 2: extend search to include contractRenewalDate
+  // Excludes soft-deleted clients from the main Client List entirely —
+  // they only appear on the separate Client History page now.
+  const visibleClients = useMemo(() => clients.filter((c) => !c.deletedAt), [clients]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return clients.filter((c) => {
-      if (q && !`${c.name} ${c.code ?? ""} ${c.legalName ?? ""}`.toLowerCase().includes(q))
+    return visibleClients.filter((c) => {
+      if (
+        q &&
+        !`${c.name} ${c.code ?? ""} ${c.legalName ?? ""} ${c.contractRenewalDate ?? ""}`
+          .toLowerCase()
+          .includes(q)
+      )
         return false;
       if (status !== ALL && c.status !== status) return false;
       if (recordStatus !== ALL && c.recordStatus !== recordStatus) return false;
-      if (bu !== ALL && c.businessUnit !== bu) return false;
+      // BU filter: dropdown stores short codes (EFA, SCA…) but clientRecord stores full names.
+      // Normalize via getShortBUName() before comparing.
+      if (bu !== ALL && getShortBUName(c.businessUnit) !== bu) return false;
+      // PART 2: Contract filter.
+      // NOTE: contractType on real data only ever holds "Recurring" or
+      // "One-off" (see src/lib/documents.ts) — there is no literal
+      // "Renewal" value anywhere. "Renewal" here means "has a renewal
+      // date set at all"; "Auto Recurring" maps to contractType === "Recurring".
+      // If this mapping isn't what's intended, the two date-computed
+      // options below are unaffected either way.
+      if (contractFilter !== ALL) {
+        if (contractFilter === "Renewal") {
+          if (!c.contractRenewalDate) return false;
+        } else if (contractFilter === "Auto Recurring") {
+          if (c.contractType !== "Recurring") return false;
+        } else if (contractFilter === "Expiring3") {
+          if (!c.contractRenewalDate) return false;
+          const days = (new Date(c.contractRenewalDate).getTime() - Date.now()) / 86400000;
+          if (!(days >= 0 && days <= 90)) return false;
+        } else if (contractFilter === "Expiring6") {
+          if (!c.contractRenewalDate) return false;
+          const days = (new Date(c.contractRenewalDate).getTime() - Date.now()) / 86400000;
+          if (!(days >= 0 && days <= 180)) return false;
+        }
+      }
       return true;
     });
-  }, [clients, query, status, recordStatus, bu]);
+  }, [visibleClients, query, status, recordStatus, bu, contractFilter]);
 
-  const activeCount = clients.filter((c) => c.status === "Active").length;
-  const pendingCount = clients.filter(
+  const activeCount = visibleClients.filter((c) => c.status === "Active").length;
+  const pendingCount = visibleClients.filter(
     (c) => c.recordStatus === "Under Review" || c.recordStatus === "Sent Back for Correction",
   ).length;
+
+  // PART 1: Actions column visibility — a user-level (not per-row) check.
+  // Built from the functions that gate each individual button in the
+  // Actions cell (canEditCompanyInfo, canSubmitClient, canAssignTeamLead,
+  // canManageDeliveryTeam, and now canDeleteClient), evaluated at the role
+  // level rather than against one specific client, since column
+  // visibility is a question about the user in general, not any one row.
+  //
+  // UPDATE: originally, none of the first four functions ever granted
+  // access to CEO / Managing Director / Admin, so they saw this column
+  // hidden despite the spec expecting them to see it (isClientSuperUser
+  // existed but wasn't wired into any button). Adding canDeleteClient
+  // (which DOES include CEO/MD/Admin via isClientSuperUser) resolves that
+  // gap naturally — they now see the column because Delete is a real
+  // action available to them, not because of a special-case bypass.
+  const userRoleForActions = getClientRole(user);
+  const userCanSeeClientActions =
+    ["Finance Head", "Marketing Head", "Business Unit Head", "Team Lead"].includes(
+      userRoleForActions,
+    ) || canDeleteClient(user);
 
   function openNew() {
     setEditing(null);
@@ -714,6 +826,19 @@ function ClientsPage() {
     toast.success("Submitted for approval review");
   }
 
+  async function handleDeleteClient(c: ClientRecord) {
+    const confirmDelete = window.confirm(
+      `Delete "${c.name}"? This removes it from the main Client List and moves it to Client History, where it can be restored later. This does not permanently erase the record.`,
+    );
+    if (!confirmDelete) return;
+    const result = await deleteClient(c.id);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(`${c.name} moved to Client History`);
+  }
+
   async function exportCsv() {
     const result = await createExport({ module: "Client Master" });
     if (!result.ok) {
@@ -744,7 +869,12 @@ function ClientsPage() {
               Client Master (Spec v1.0)
             </h1>
             <p className="mt-1 text-[13.5px] text-muted-foreground max-w-2xl">
-              {clients.length} clients · {activeCount} active · {pendingCount} pending approval
+              {visibleClients.length} clients · {activeCount} active · {pendingCount} pending approval
+              {(query.trim() || status !== ALL || recordStatus !== ALL || bu !== ALL || contractFilter !== ALL) && (
+                <span className="ml-1.5 font-medium text-foreground">
+                  — Showing {filtered.length} of {visibleClients.length}
+                </span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -765,7 +895,7 @@ function ClientsPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search code, name, legal name…"
+              placeholder="Search code, name, legal name, renewal date…"
               className="flex-1 bg-transparent outline-none text-[13px] placeholder:text-muted-foreground"
             />
           </div>
@@ -806,6 +936,18 @@ function ClientsPage() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={contractFilter} onValueChange={setContractFilter}>
+            <SelectTrigger className="h-9 w-[150px] text-[13px]">
+              <SelectValue placeholder="Contract" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>All contracts</SelectItem>
+              <SelectItem value="Renewal">Renewal</SelectItem>
+              <SelectItem value="Auto Recurring">Auto Recurring</SelectItem>
+              <SelectItem value="Expiring3">Expiring in 3 months</SelectItem>
+              <SelectItem value="Expiring6">Expiring in 6 months</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -816,49 +958,167 @@ function ClientsPage() {
           </div>
         ) : (
           <div className="rounded-2xl border border-border bg-elevated overflow-x-auto">
-            <Table className="min-w-[1100px]">
+            {/* CHANGE 1: Removed "Client Identity" column. CHANGE 2: Added "Renewal Date". CHANGE 3: Split "BU / Entity" into two columns. */}
+            <Table className="min-w-[1200px]">
               <TableHeader>
                 <TableRow className="border-b border-border/60">
                   <TableHead className="w-[110px] px-4 py-3.5 text-xs font-semibold">Code</TableHead>
                   <TableHead className="min-w-[220px] px-4 py-3.5 text-xs font-semibold">Client Name</TableHead>
-                  <TableHead className="min-w-[220px] px-4 py-3.5 text-xs font-semibold">Client Identity</TableHead>
-                  <TableHead className="min-w-[160px] px-4 py-3.5 text-xs font-semibold">BU / Entity</TableHead>
+                  <TableHead className="w-[90px] px-4 py-3.5 text-xs font-semibold">Business Unit</TableHead>
+                  <TableHead className="w-[80px] px-4 py-3.5 text-xs font-semibold">Entity</TableHead>
                   <TableHead className="min-w-[140px] px-4 py-3.5 text-xs font-semibold">Location</TableHead>
+                  <TableHead className="w-[120px] px-4 py-3.5 text-xs font-semibold">Renewal Date</TableHead>
                   <TableHead className="w-[110px] px-4 py-3.5 text-xs font-semibold">Accounts</TableHead>
                   <TableHead className="w-[110px] px-4 py-3.5 text-xs font-semibold">Status</TableHead>
                   <TableHead className="w-[130px] px-4 py-3.5 text-xs font-semibold">Approval</TableHead>
-                  <TableHead className="w-[140px] px-4 py-3.5 text-xs font-semibold text-right">Actions</TableHead>
+                  {userCanSeeClientActions && (
+                    <TableHead className="min-w-[220px] px-4 py-3.5 text-xs font-semibold">Actions</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((c) => (
                   <TableRow key={c.id} className="hover:bg-surface-2/40 transition-colors">
-                    <TableCell className="font-mono text-xs px-4 py-3.5">{c.code ?? "—"}</TableCell>
-                    <TableCell className="font-semibold text-xs text-foreground px-4 py-3.5">{c.name ?? "—"}</TableCell>
-                    <TableCell className="px-4 py-3.5">
+                    <TableCell className="font-mono text-xs px-4 py-3.5 whitespace-nowrap">{c.code ?? "—"}</TableCell>
+                    {/* CHANGE 1: Client360 link moved here. CHANGE 1: Client Identity column removed. */}
+                    <TableCell className="font-semibold text-xs text-foreground px-4 py-3.5">
                       <button
                         type="button"
                         onClick={() => openClient360(c)}
                         className="font-semibold text-foreground hover:text-accent hover:underline text-left cursor-pointer"
                       >
-                        {c.code ?? c.name}
+                        {c.name ?? "—"}
                       </button>
-                      {c.name && c.name !== c.code && (
-                        <div className="text-xs text-muted-foreground mt-0.5">{c.name}</div>
-                      )}
+                    </TableCell>
+                    {/* CHANGE 3: BU/Entity split into two columns */}
+                    <TableCell className="text-xs px-4 py-3.5 whitespace-nowrap font-medium">
+                      {getShortBUName(c.businessUnit)}
                     </TableCell>
                     <TableCell className="text-xs px-4 py-3.5 whitespace-nowrap font-medium">
-                      {formatShortBUEntity(c.businessUnit, c.billingEntity)}
+                      {getShortEntityName(c.billingEntity)}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground px-4 py-3.5 whitespace-nowrap">
                       {c.clientCity ? `${c.clientCity}, ${c.clientCountry}` : "—"}
                     </TableCell>
-                    <TableCell className="text-xs px-4 py-3.5 whitespace-nowrap">{c.numberOfAccounts ?? 1} account(s)</TableCell>
-                    <TableCell className="px-4 py-3.5">
-                      <StatusBadge status={c.status} />
+                    {/* CHANGE 2: Renewal Date column */}
+                    <TableCell className="text-xs px-4 py-3.5 whitespace-nowrap">
+                      {c.contractRenewalDate
+                        ? new Date(c.contractRenewalDate).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })
+                        : "—"}
                     </TableCell>
+                    <TableCell className="text-xs px-4 py-3.5 whitespace-nowrap">{c.numberOfAccounts ?? 1} account(s)</TableCell>
+                    {/* CHANGE 11: Status hover tooltip — uses the real
+                        portal-based Tooltip component (renders outside the
+                        table's overflow-x-auto container via Radix Portal,
+                        with built-in collision detection), not a hand-rolled
+                        absolute-positioned div. This is what actually fixes
+                        the clipping — repositioning the old div only moved
+                        the problem to a different table edge. */}
                     <TableCell className="px-4 py-3.5">
-                      <StatusBadge status={c.recordStatus} />
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="inline-flex">
+                              <StatusBadge status={c.status} />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-popover text-popover-foreground border border-border p-3 shadow-lg w-56 space-y-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">Current Status</span>
+                              <span className="font-semibold text-foreground">{c.status}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">Status Since</span>
+                              <span className="font-semibold text-foreground">
+                                {c.updatedAt
+                                  ? new Date(c.updatedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+                                  : "—"}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">Last Updated By</span>
+                              <span className="font-semibold text-foreground truncate max-w-[110px]">{c.lastUpdatedBy || "—"}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">Last Updated Date</span>
+                              <span className="font-semibold text-foreground">
+                                {c.updatedAt
+                                  ? new Date(c.updatedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+                                  : "—"}
+                              </span>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableCell>
+                    {/* Approval status hover tooltip — same real Tooltip
+                        component as above, same reason. There's no
+                        dedicated "reason for review" field in the schema,
+                        so this shows what's actually available: who last
+                        touched the record and when, plus rejection notes
+                        or approval info when those apply. */}
+                    <TableCell className="px-4 py-3.5">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="inline-flex">
+                              <StatusBadge status={c.recordStatus} />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-popover text-popover-foreground border border-border p-3 shadow-lg w-64 space-y-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">Approval Status</span>
+                              <span className="font-semibold text-foreground">{c.recordStatus}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">Submitted / Last Action By</span>
+                              <span className="font-semibold text-foreground truncate max-w-[130px]">
+                                {c.lastUpdatedBy || c.createdBy || "—"}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">Last Action Date</span>
+                              <span className="font-semibold text-foreground">
+                                {c.updatedAt
+                                  ? new Date(c.updatedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+                                  : "—"}
+                              </span>
+                            </div>
+                            {c.recordStatus === "Approved" && (
+                              <>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-muted-foreground">Approved By</span>
+                                  <span className="font-semibold text-foreground truncate max-w-[130px]">{c.approvedBy || "—"}</span>
+                                </div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-muted-foreground">Approved On</span>
+                                  <span className="font-semibold text-foreground">
+                                    {c.approvedAt
+                                      ? new Date(c.approvedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+                                      : "—"}
+                                  </span>
+                                </div>
+                              </>
+                            )}
+                            {(c.recordStatus === "Sent Back for Correction" || c.recordStatus === "Rejected") &&
+                              c.rejectionCorrectionNotes && (
+                                <div>
+                                  <span className="text-muted-foreground block mb-0.5">Reason</span>
+                                  <span className="font-medium text-foreground leading-snug block">{c.rejectionCorrectionNotes}</span>
+                                </div>
+                              )}
+                            {c.recordStatus === "Under Review" && (
+                              <div className="text-muted-foreground italic">
+                                Awaiting Business Unit Head approval.
+                              </div>
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       {c.recordStatus === "Sent Back for Correction" &&
                         c.rejectionCorrectionNotes && (
                           <p className="text-[11px] text-amber-700 mt-1 flex items-start gap-1 max-w-[220px] leading-snug">
@@ -867,32 +1127,47 @@ function ClientsPage() {
                           </p>
                         )}
                     </TableCell>
-                    <TableCell className="text-right px-4 py-3.5 space-x-1 whitespace-nowrap">
-                      {canEditCompanyInfo(user, c) && (
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>
-                          Edit
-                        </Button>
-                      )}
-                      {canSubmitClient(user, c) &&
-                      (c.recordStatus === "Draft" ||
-                        c.recordStatus === "Sent Back for Correction") ? (
-                        <Button variant="ghost" size="sm" onClick={() => submit(c)}>
-                          <SendHorizonal className="h-3.5 w-3.5" /> Submit
-                        </Button>
-                      ) : null}
-                      {canAssignTeamLead(user, c) &&
-                      !c.teamLeadId &&
-                      c.recordStatus === "Approved" ? (
-                        <Button variant="ghost" size="sm" onClick={() => setOwnershipClient(c)}>
-                          <UsersRound className="h-3.5 w-3.5" /> Assign Team Lead
-                        </Button>
-                      ) : null}
-                      {canManageDeliveryTeam(user, c) && c.recordStatus === "Approved" ? (
-                        <Button variant="ghost" size="sm" onClick={() => setOwnershipClient(c)}>
-                          <UsersRound className="h-3.5 w-3.5" /> Manage Team
-                        </Button>
-                      ) : null}
-                    </TableCell>
+                    {userCanSeeClientActions && (
+                      <TableCell className="px-4 py-3.5">
+                        <div className="flex flex-wrap items-center gap-1">
+                          {canEditCompanyInfo(user, c) && (
+                            <Button variant="ghost" size="sm" onClick={() => openEdit(c)}>
+                              Edit
+                            </Button>
+                          )}
+                          {canSubmitClient(user, c) &&
+                            (c.recordStatus === "Draft" ||
+                              c.recordStatus === "Sent Back for Correction") ? (
+                            <Button variant="ghost" size="sm" onClick={() => submit(c)}>
+                              <SendHorizonal className="h-3.5 w-3.5" /> Submit
+                            </Button>
+                          ) : null}
+                          {/* CHANGE 10: Allow reassigning existing Team Lead — removed !c.teamLeadId gate */}
+                          {canAssignTeamLead(user, c) && c.recordStatus === "Approved" ? (
+                            <Button variant="ghost" size="sm" onClick={() => setOwnershipClient(c)}>
+                              <UsersRound className="h-3.5 w-3.5" />
+                              {c.teamLeadId ? "Reassign Team" : "Assign Team Lead"}
+                            </Button>
+                          ) : null}
+                          {canManageDeliveryTeam(user, c) && c.recordStatus === "Approved" ? (
+                            <Button variant="ghost" size="sm" onClick={() => setOwnershipClient(c)}>
+                              <UsersRound className="h-3.5 w-3.5" /> Manage Team
+                            </Button>
+                          ) : null}
+                          {canDeleteClient(user, c) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              title="Delete"
+                              onClick={() => handleDeleteClient(c)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -939,13 +1214,12 @@ function ClientsPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => handleTabClick(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap ${
-                    isActive
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap ${isActive
                       ? "bg-foreground text-background font-semibold"
                       : valid
                         ? "text-foreground hover:bg-surface-2"
                         : "text-muted-foreground hover:bg-surface-2"
-                  }`}
+                    }`}
                 >
                   <tab.icon className="h-3.5 w-3.5" />
                   {tab.label}
@@ -1438,13 +1712,12 @@ function ClientsPage() {
                   return (
                     <div
                       key={idx}
-                      className={`rounded-2xl border transition-all p-4 space-y-3 ${
-                        acc.isPrimaryAccount
+                      className={`rounded-2xl border transition-all p-4 space-y-3 ${acc.isPrimaryAccount
                           ? "border-accent/40 bg-accent/5 shadow-sm"
                           : isValid
                             ? "border-border bg-card"
                             : "border-rose-500/30 bg-rose-500/5"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-2.5">
                         <div className="flex items-center gap-2">
@@ -1521,54 +1794,75 @@ function ClientsPage() {
                             }
                           />
                         </div>
-                        <div>
-                          <Label className="text-[11.5px]">
-                            Billing Entity <span className="text-rose-500 font-bold">*</span>
-                          </Label>
-                          <Select
-                            value={acc.billingEntity}
-                            onValueChange={(v) => updateAccountField(idx, "billingEntity", v)}
-                          >
-                            <SelectTrigger
-                              className={`h-9 text-xs transition-colors hover:border-accent/40 ${
-                                !acc.billingEntity.trim() ? "border-rose-500/50" : ""
-                              }`}
-                            >
-                              <SelectValue placeholder="Select Billing Entity…" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {billingEntities.map((b) => (
-                                <SelectItem key={b} value={b}>
-                                  {b}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-[11.5px]">
-                            Currency <span className="text-rose-500 font-bold">*</span>
-                          </Label>
-                          <Select
-                            value={acc.currency}
-                            onValueChange={(v) => updateAccountField(idx, "currency", v)}
-                          >
-                            <SelectTrigger
-                              className={`h-9 text-xs transition-colors hover:border-accent/40 ${
-                                !acc.currency.trim() ? "border-rose-500/50" : ""
-                              }`}
-                            >
-                              <SelectValue placeholder="Select Currency…" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {clientCurrencies.map((c) => (
-                                <SelectItem key={c} value={c}>
-                                  {c}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        {acc.isPrimaryAccount ? (
+                          /* Primary account: Billing Entity and Currency are inherited from Identity — no duplication */
+                          <>
+                            <div>
+                              <Label className="text-[11.5px]">Billing Entity</Label>
+                              <div className="h-9 flex items-center px-3 rounded-md border border-accent/30 bg-accent/5 text-xs font-semibold text-accent gap-1.5">
+                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                {form.billingEntity || <span className="text-muted-foreground italic">Set in Identity tab</span>}
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-[11.5px]">Currency</Label>
+                              <div className="h-9 flex items-center px-3 rounded-md border border-accent/30 bg-accent/5 text-xs font-semibold text-accent gap-1.5">
+                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                {form.currency || <span className="text-muted-foreground italic">Set in Identity tab</span>}
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          /* Secondary accounts: editable since they may differ from client-level */
+                          <>
+                            <div>
+                              <Label className="text-[11.5px]">
+                                Billing Entity <span className="text-rose-500 font-bold">*</span>
+                              </Label>
+                              <Select
+                                value={acc.billingEntity}
+                                onValueChange={(v) => updateAccountField(idx, "billingEntity", v)}
+                              >
+                                <SelectTrigger
+                                  className={`h-9 text-xs transition-colors hover:border-accent/40 ${!acc.billingEntity.trim() ? "border-rose-500/50" : ""
+                                    }`}
+                                >
+                                  <SelectValue placeholder="Select Billing Entity…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {billingEntities.map((b) => (
+                                    <SelectItem key={b} value={b}>
+                                      {b}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[11.5px]">
+                                Currency <span className="text-rose-500 font-bold">*</span>
+                              </Label>
+                              <Select
+                                value={acc.currency}
+                                onValueChange={(v) => updateAccountField(idx, "currency", v)}
+                              >
+                                <SelectTrigger
+                                  className={`h-9 text-xs transition-colors hover:border-accent/40 ${!acc.currency.trim() ? "border-rose-500/50" : ""
+                                    }`}
+                                >
+                                  <SelectValue placeholder="Select Currency…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {clientCurrencies.map((c) => (
+                                    <SelectItem key={c} value={c}>
+                                      {c}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </>
+                        )}
                         <div>
                           <Label className="text-[11.5px]">Tax / Registration Number</Label>
                           <Input
@@ -1657,9 +1951,8 @@ function ClientsPage() {
                                   updateAccountField(idx, "addressLine1", e.target.value)
                                 }
                                 placeholder="Street Address"
-                                className={`hover:border-accent/40 transition-colors ${
-                                  !acc.addressLine1.trim() ? "border-rose-500/50" : ""
-                                }`}
+                                className={`hover:border-accent/40 transition-colors ${!acc.addressLine1.trim() ? "border-rose-500/50" : ""
+                                  }`}
                               />
                             </div>
                             <div>
@@ -1669,9 +1962,8 @@ function ClientsPage() {
                               <Input
                                 value={acc.city}
                                 onChange={(e) => updateAccountField(idx, "city", e.target.value)}
-                                className={`hover:border-accent/40 transition-colors ${
-                                  !acc.city.trim() ? "border-rose-500/50" : ""
-                                }`}
+                                className={`hover:border-accent/40 transition-colors ${!acc.city.trim() ? "border-rose-500/50" : ""
+                                  }`}
                               />
                             </div>
                             <div>
@@ -1683,9 +1975,8 @@ function ClientsPage() {
                                 onChange={(e) =>
                                   updateAccountField(idx, "stateOrRegion", e.target.value)
                                 }
-                                className={`hover:border-accent/40 transition-colors ${
-                                  !acc.stateOrRegion.trim() ? "border-rose-500/50" : ""
-                                }`}
+                                className={`hover:border-accent/40 transition-colors ${!acc.stateOrRegion.trim() ? "border-rose-500/50" : ""
+                                  }`}
                               />
                             </div>
                             <div>
@@ -1695,9 +1986,8 @@ function ClientsPage() {
                               <Input
                                 value={acc.country}
                                 onChange={(e) => updateAccountField(idx, "country", e.target.value)}
-                                className={`hover:border-accent/40 transition-colors ${
-                                  !acc.country.trim() ? "border-rose-500/50" : ""
-                                }`}
+                                className={`hover:border-accent/40 transition-colors ${!acc.country.trim() ? "border-rose-500/50" : ""
+                                  }`}
                               />
                             </div>
                             <div>
@@ -1709,9 +1999,8 @@ function ClientsPage() {
                                 onChange={(e) =>
                                   updateAccountField(idx, "zipOrPinCode", e.target.value)
                                 }
-                                className={`hover:border-accent/40 transition-colors ${
-                                  !acc.zipOrPinCode.trim() ? "border-rose-500/50" : ""
-                                }`}
+                                className={`hover:border-accent/40 transition-colors ${!acc.zipOrPinCode.trim() ? "border-rose-500/50" : ""
+                                  }`}
                               />
                             </div>
                           </>
@@ -1791,24 +2080,9 @@ function ClientsPage() {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div>
-                          <Label className="text-[11.5px]">Business Unit Mapping</Label>
-                          <Select
-                            value={acc.businessUnitMapping || form.businessUnit}
-                            onValueChange={(v) => updateAccountField(idx, "businessUnitMapping", v)}
-                          >
-                            <SelectTrigger className="h-9 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {businessUnits.map((b) => (
-                                <SelectItem key={b} value={b}>
-                                  {b}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        {/* CHANGE 7: Business Unit Mapping removed from Account level UI.
+                             The businessUnitMapping column is preserved in DB and type.
+                             Existing saved values continue to work. */}
                         <div>
                           <Label className="text-[11.5px]">Account Status</Label>
                           <Select
@@ -1959,9 +2233,8 @@ function ClientsPage() {
                   return (
                     <div
                       key={stack.category}
-                      className={`rounded-2xl border p-4 space-y-3 bg-card ${
-                        isNA ? "border-border opacity-75" : "border-border shadow-sm"
-                      }`}
+                      className={`rounded-2xl border p-4 space-y-3 bg-card ${isNA ? "border-border opacity-75" : "border-border shadow-sm"
+                        }`}
                     >
                       <div className="flex items-center justify-between border-b border-border/60 pb-2">
                         <Label className="font-semibold text-sm">{stack.category}</Label>

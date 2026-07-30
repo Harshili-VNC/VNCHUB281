@@ -1,79 +1,79 @@
 ,,,,,,,,,,,,,,,,,
- Customer Code , Billing Entity , Client Name , Division , Invoicing Type , Billing Currency , FirstName , LastName , Contact Name , Address , City , state , Country , Tax Number , Billing Start Date , Contract Date , Manager , Team Lead 
-C-000487,VNC AU,3D FORMULATIONS PTY. LIMITED,ANZA,Recurring,AUD,Derek ,Arnnarle,Derek Arnnarle,"Unit 15, 33 Johnston Street Port",Melbourne,Victoria ,Australia,,Jan-26,,Aamir Shaikh,Krupali Joshi
-C-000498,VNC AU,A Man & His Cave Pty Ltd,ANZA,Recurring,AUD,Jaya, Yoannidis,Jaya Yoannidis,"1/396 Princes Hwy, St Peters",Sydney,New South Wales,Australia,,Jun-26,,Aamir Shaikh,Krupali Joshi
-C-000004,VNC AU,Abundant Advisory Pty Ltd,EFA,Recurring,AUD,Stephanie,Cruz,,"Suite 202, Level 2 West Lobby, 33 Lexington Dr, Bella Vista NSW 2153",Sydney,New South Wales,Australia,53636457595,May-20,,Rupali Parikh,Vinita Sharma
-C-000495,VNC AU,Agilitas Australia,SCA,one Off,AUD,Brett, Gribb,Brett Gribb,VIC 3193,Melbourne,Victoria,Australia,,May-26,,Aamir Shaikh,Aliakbar Vohra
-C-000376,VNC AU,ALDCROFT HOLDINGS PTY LTD,ANZA,Recurring,AUD,Sandy,Aldcroft,Sandy Aldcroft,PO BOX 569 WEIPA     QLD 4874 Australia,Weipa,Queensland,Australia,42119419064,Nov-24,,Aamir Shaikh,Krupali Joshi
-C-000484,VNC GL,Audien LLC (Audien Hearing) ,SCA,Recurring,USD,,,Mike Garcia,10733 N Frank Lloyd Wright Blvd Unit 103,Scottsdale,Arizona,USA,,Dec-25,,Aamir Shaikh,Ganesh Rathore
-C-000324,VNC AU,Aussie Pallets,ANZA,Recurring,AUD,,,James Love,10 Normanby Ave SUNSHINE WEST VIC 3020 AUSTRALIA ABN: 19 006 902 601,Melbourne,Victoria,Australia,19006902601,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000378,VNC AU,B.O DREW & L.A DREW,ANZA,Recurring,AUD,Bruce,Drew,Bruce Drew,200 Kowari Road Finch HAtton QLD 4756, Finch HAtton,Queensland,Australia,70655462858,Dec-24,,Aamir Shaikh,Krupali Joshi
-C-000325,VNC AU,Bioplant Limited,ANZA,Recurring,AUD,Stephen,McIntyre,Allan Clarke,L2/1 Southbank Blvd Southbank Melbourne VIC 3006 Australia,Melbourne,Victoria,Australia,97133339134,Jul-24,,Aamir Shaikh,Krupali Joshi
-C-000021,VNC AU,Blue Mountain Company,MBS,Recurring,AUD,Accounts,At BMCO,Jackie Hammond,"30 Finchley Street, Milton",Brisbane,Queensland,Australia,16671677428,Feb-22,,Jimmy Vadera,Jimmy Vadera
-C-000445,VNC AU,BNI Group LYD Pty Ltd,ANZA,Recurring,AUD,FLORIJE ,TUNUZLIU-JUSUFI,Florije Tunuzliu-Jusufi,U21702 ORCHID AVE SURFERS PARADISE ,Brisbane,Queensland,Australia,,Aug-25,,Aamir Shaikh,Krupali Joshi
+ Customer Code , Billing Entity , Company Name , Division , Invoicing Type , Billing Currency , FirstName , LastName , Contact Name , Address , City , state , Country , Tax Number , Billing Start Date , Contract Date , Manager , Team Lead 
+C-000487,VNC AU,3D FORMULATIONS PTY. LIMITED,ANZA,Recurring,AUD,Derek ,Arnnarle,Derek Arnnarle,"Unit 15, 33 Johnston Street Port",Melbourne,Victoria ,Australia,,Jan-26,23-Jan-26,Aamir Shaikh,Krupali Joshi
+C-000498,VNC AU,A Man & His Cave Pty Ltd,ANZA,Recurring,AUD,Jaya, Yoannidis,Jaya Yoannidis,"1/396 Princes Hwy, St Peters",Sydney,New South Wales,Australia,,Jun-26,11-Jun-26,Aamir Shaikh,Krupali Joshi
+C-000004,VNC AU,Abundant Advisory Pty Ltd,EFA,Recurring,AUD,Stephanie,Cruz,,"Suite 202, Level 2 West Lobby, 33 Lexington Dr, Bella Vista NSW 2153",Sydney,New South Wales,Australia,53636457595,May-20, 17-Apr-26 ,Rupali Parikh,Vinita Sharma
+C-000495,VNC AU,Agilitas Australia,SCA,one Off,AUD,Brett, Gribb,Brett Gribb,VIC 3193,Melbourne,Victoria,Australia,,May-26,20-May-26,Aamir Shaikh,Aliakbar Vohra
+C-000376,VNC AU,ALDCROFT HOLDINGS PTY LTD,ANZA,Recurring,AUD,Sandy,Aldcroft,Sandy Aldcroft,PO BOX 569 WEIPA     QLD 4874 Australia,Weipa,Queensland,Australia,42119419064,Nov-24,29-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000484,VNC GL,Audien LLC (Audien Hearing) ,SCA,Recurring,USD,,,Mike Garcia,10733 N Frank Lloyd Wright Blvd Unit 103,Scottsdale,Arizona,USA,,Dec-25,5-Jun-26,Aamir Shaikh,Ganesh Rathore
+C-000324,VNC AU,Aussie Pallets,ANZA,Recurring,AUD,,,James Love,10 Normanby Ave SUNSHINE WEST VIC 3020 AUSTRALIA ABN: 19 006 902 601,Melbourne,Victoria,Australia,19006902601,Jun-24,23-Jun-26,Aamir Shaikh,Krupali Joshi
+C-000378,VNC AU,B.O DREW & L.A DREW,ANZA,Recurring,AUD,Bruce,Drew,Bruce Drew,200 Kowari Road Finch HAtton QLD 4756, Finch HAtton,Queensland,Australia,70655462858,Dec-24,16-Jul-25,Aamir Shaikh,Krupali Joshi
+C-000325,VNC AU,Bioplant Limited,ANZA,Recurring,AUD,Stephen,McIntyre,Allan Clarke,L2/1 Southbank Blvd Southbank Melbourne VIC 3006 Australia,Melbourne,Victoria,Australia,97133339134,Jul-24,24-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000021,VNC AU,Blue Mountain Company,MBS,Recurring,AUD,Accounts,At BMCO,Jackie Hammond,"30 Finchley Street, Milton",Brisbane,Queensland,Australia,16671677428,Feb-22,16-Aug-22,Jimmy Vadera,Jimmy Vadera
+C-000445,VNC AU,BNI Group LYD Pty Ltd,ANZA,Recurring,AUD,FLORIJE ,TUNUZLIU-JUSUFI,Florije Tunuzliu-Jusufi,U21702 ORCHID AVE SURFERS PARADISE ,Brisbane,Queensland,Australia,,Aug-25,12-Aug-25,Aamir Shaikh,Krupali Joshi
 C-000025,VNC GL,Cambie Distribution,SCA,Recurring,USD,,,David Foley ," 
-1711 Erie Street","Stratford, ON, ",Ontario,Canada,,Oct-24,,Aamir Shaikh,Ganesh Rathore
-C-000476,VNC GL,Chef Works Pte Ltd,SCA,One off,USD,,,Anthony Stiefel ,3B Temple Street,,,Singapore,,Nov-25,,Aamir Shaikh,Aliakbar Vohra
+1711 Erie Street","Stratford, ON, ",Ontario,Canada,,Oct-24,26-Mar-24,Aamir Shaikh,Ganesh Rathore
+C-000476,VNC GL,Chef Works Pte Ltd,SCA,One off,USD,,,Anthony Stiefel ,3B Temple Street,,,Singapore,,Nov-25,24-Oct-25,Aamir Shaikh,Aliakbar Vohra
 C-000034,VNC GL,CLA Global TS Holdings Pte. Ltd.,MBS,Recurring,USD,,,Grace Lui,"80 Robinson Road, #25-00",Singapore,,Singapore,,Jun-23,,Jimmy Vadera,Ravina Kahar
-C-000353,VNC AU,Clarendon Enterprises Pty Ltd T/A Integrate Health,ANZA,Recurring,AUD,Iain,Clarendon,Iain Clarendon,51 Crowleys Road    Racecourse QLD 4740,Mackay,Queensland,Australia,82104516458,Nov-24,,Aamir Shaikh,Krupali Joshi
-C-000036,VNC AU,Collard Family Trust and Warwick Family Trust Trading As Reconciled Business Services,MBS,Recurring,AUD,Janet,Collard,,PO Box 722 ORMEAU QLD 4208 AUSTRALIA,,,Australia,85915667574,Feb-17,,Jimmy Vadera,Ravina Kahar
-C-000039,VNC GL,Coloxchange Nevada Inc,EFA,Recurring,USD,,,Navroz Haji,"823 Pilot Road, (Suite A)",Las Vegas,Nevada,USA,,Jul-22,,Rupali Parikh,Rupali Parikh
-C-000326,VNC AU,CommunityOSH Pty Ltd,ANZA,Recurring,AUD,Jock,Jeffries,Jock Jeffries,3 Wiltshire St RICHMOND VIC 3121 AUSTRALIA,Melbourne,Victoria,Australia,66618758786,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000345,VNC AU,Digital Preservation Coalition,ANZA,Recurring,AUD,John,McMillan,John McMillan,Parkville ,Melbourne,Victoria,Australia,,Oct-24,,Aamir Shaikh,Krupali Joshi
-C-000383,VNC AU,"DINGLE,GARY R",ANZA,Recurring,AUD,Gary,Dingle,Gary Dingle,2 WILLS RD    Rosedale QLD 4674 Australia,Rosedale,Queensland,Australia,66231434504,Dec-24,,Aamir Shaikh,Krupali Joshi
-C-000494,VNC AU,Empire Accounting,EFA,Recurring,AUD,Kerryn ,Searle,Kerryn Searle,"428a Marine Parade, South New Brighton",Christchurch,South Island,New Zealand,,May-26,,Rupali Parikh,Vinita Sharma
-C-000489,VNC GL,Ethos Car Care,SCA,Recurring,USD,,,Tim Coats, 2332 La Mirada Dr,Vista,California,USA,,Feb-26,,Aamir Shaikh,Ganesh Rathore
+C-000353,VNC AU,Clarendon Enterprises Pty Ltd T/A Integrate Health,ANZA,Recurring,AUD,Iain,Clarendon,Iain Clarendon,51 Crowleys Road    Racecourse QLD 4740,Mackay,Queensland,Australia,82104516458,Nov-24,30-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000036,VNC AU,Collard Family Trust and Warwick Family Trust Trading As Reconciled Business Services,MBS,Recurring,AUD,Janet,Collard,,PO Box 722 ORMEAU QLD 4208 AUSTRALIA,,,Australia,85915667574,Feb-17,23-May-25,Jimmy Vadera,Ravina Kahar
+C-000039,VNC GL,Coloxchange Nevada Inc,EFA,Recurring,USD,,,Navroz Haji,"823 Pilot Road, (Suite A)",Las Vegas,Nevada,USA,,Jul-22,5-Mar-25,Rupali Parikh,Rupali Parikh
+C-000326,VNC AU,CommunityOSH Pty Ltd,ANZA,Recurring,AUD,Jock,Jeffries,Jock Jeffries,3 Wiltshire St RICHMOND VIC 3121 AUSTRALIA,Melbourne,Victoria,Australia,66618758786,Jun-24,20-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000345,VNC AU,Digital Preservation Coalition,ANZA,Recurring,AUD,John,McMillan,John McMillan,Parkville ,Melbourne,Victoria,Australia,,Oct-24,16-Jun-26,Aamir Shaikh,Krupali Joshi
+C-000383,VNC AU,"DINGLE,GARY R",ANZA,Recurring,AUD,Gary,Dingle,Gary Dingle,2 WILLS RD    Rosedale QLD 4674 Australia,Rosedale,Queensland,Australia,66231434504,Dec-24,3-Jul-25,Aamir Shaikh,Krupali Joshi
+C-000494,VNC AU,Empire Accounting,EFA,Recurring,AUD,Kerryn ,Searle,Kerryn Searle,"428a Marine Parade, South New Brighton",Christchurch,South Island,New Zealand,,May-26,19-May-26,Rupali Parikh,Vinita Sharma
+C-000489,VNC GL,Ethos Car Care,SCA,Recurring,USD,,,Tim Coats, 2332 La Mirada Dr,Vista,California,USA,,Feb-26,24-Feb-26,Aamir Shaikh,Ganesh Rathore
 C-000374,VNC AU,First Connections Early Learning Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,,,,,Australia,,Apr-25,,Rupali Parikh,Vinita Sharma
 C-000374,VNC AU,First Connections Early Learning Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,,,,,Australia,,Apr-25,,Rupali Parikh,Vinita Sharma
 C-000060,VNC GL,Flex-Tec Inc,EFA,Recurring,USD,,,"
-Bob Green",ONE VANCE ST ,BYROMVILLE,Georgia,USA,,Mar-17,,Rupali Parikh,Vruddhi Parvatia
-C-000327,VNC AU,FSD Pty Ltd,ANZA,Recurring,AUD,Tom,Gaden,Tom Gaden,ABN: 27 650 708 991,Docklands ,Victoria,Australia,27650708991,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000328,VNC AU,G.K HULL & C.P WALKER,ANZA,Recurring,AUD,Chris,Walker,Chris Walker,Unit 9 48 Carlton St FRESHWATER NSW 2096 AUSTRALIA ABN: 53 391 011 978,FRESHWATER,New South Wales,Australia,53391011978,Jun-24,,Aamir Shaikh,Krupali Joshi
+Bob Green",ONE VANCE ST ,BYROMVILLE,Georgia,USA,,Mar-17,13-Feb-26,Rupali Parikh,Vruddhi Parvatia
+C-000327,VNC AU,FSD Pty Ltd,ANZA,Recurring,AUD,Tom,Gaden,Tom Gaden,ABN: 27 650 708 991,Docklands ,Victoria,Australia,27650708991,Jun-24,27-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000328,VNC AU,G.K HULL & C.P WALKER,ANZA,Recurring,AUD,Chris,Walker,Chris Walker,Unit 9 48 Carlton St FRESHWATER NSW 2096 AUSTRALIA ABN: 53 391 011 978,FRESHWATER,New South Wales,Australia,53391011978,Jun-24,26-Jun-25,Aamir Shaikh,Krupali Joshi
 C-000497,VNC AU,Greenwood Leather,SCA,one Off,AUD,,,Faisal Nawaz,"2/3 Remount Way, Cranbourne West",Melbourne,Victoria ,Australia,,,,Aamir Shaikh,Ganesh Rathore
-C-000477,VNC GL,Half Past Seven Home,SCA,Recurring,USD,,,Jen Burch,Ponte Vedra,Ponte Vedra,California,USA,,Nov-25,,Aamir Shaikh,Aliakbar Vohra
+C-000477,VNC GL,Half Past Seven Home,SCA,Recurring,USD,,,Jen Burch,Ponte Vedra,Ponte Vedra,California,USA,,Nov-25,3-Nov-25,Aamir Shaikh,Aliakbar Vohra
 C-000432,VNC AU,Happy Kat Pty Ltd,EFA,Recurring,AUD,Helen,Sykes,Helen Sykes,PO BOX 6962    NORWEST NSW 2153 Australia,Sydney,New South Wales,Australia,,Nov-24,,Rupali Parikh,Vinita Sharma
 C-000433,VNC AU,Hunny Simply Pty Ltd,EFA,Recurring,AUD,Helen,Sykes,Helen Sykes,Unit 14 275 Annangrove Rd    ROUSE HILL NSW 2155 Australia,Sydney,New South Wales,Australia,19679968640,Nov-24,,Rupali Parikh,Vinita Sharma
-C-000499,VNC AU,Industrial Brushware Pty Ltd ,SCA,one Off,AUD,,,Bill Kikos,"22 Law Court, Sunshine",Melbourne,Victoria,Australia,,Jun-26,,Aamir Shaikh,0
-C-000330,VNC AU,Janine Morcos,ANZA,Recurring,AUD,Janine,Morcos,,Unit 6 9 Hammond St THORNBURY VIC 3071 AUSTRALIA ABN: 66 747 962 788,,,Australia,66747962788,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000453,VNC AU,Jigsaw OOSH Bardia Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO Box 8301,Sydney,New South Wales,Australia,,Apr-26,,Rupali Parikh,Vinita Sharma
-C-000455,VNC AU,Jigsaw OOSH Dural Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO BOX 8301,Sydney,New South Wales,Australia,,Apr-26,,Rupali Parikh,Vinita Sharma
-C-000456,VNC AU,Jigsaw OOSH Galungara Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO Box 8301,Sydney,New South Wales,Australia,,Apr-26,,Rupali Parikh,Vinita Sharma
-C-000457,VNC AU,Jigsaw OOSH Hambledon Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO BOX 8301,Sydney,New South Wales,Australia,,Apr-26,,Rupali Parikh,Vinita Sharma
-C-000458,VNC AU,Jigsaw OOSH Melrose Park Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,Po Box 8301,Sydney,New South Wales,Australia,,Apr-26,,Rupali Parikh,Vinita Sharma
-C-000077,VNC AU,Jigsaw OOSH Pty Ltd,EFA,Recurring,AUD,Ronald,Alexander,,"6.02/5 Celebration Dr, Bella Vista     NSW 2153 Australia",Bella Vista,New South Wales,Australia,51160855907,Feb-23,,Rupali Parikh,Vinita Sharma
-C-000459,VNC AU,Jigsaw OOSH Strathfield South Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO BOX 8301,Sydney,New South Wales,Australia,,Apr-26,,Rupali Parikh,Vinita Sharma
-C-000460,VNC AU,Jigsaw OOSH Vardys Road Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO Box 8301,Sydney,New South Wales,Australia,,Apr-26,,Rupali Parikh,Vinita Sharma
-C-000389,VNC AU,Jones Heavy Mechanical & Electrical Pty Ltd,ANZA,Recurring,AUD,Matthew,Jones,Matthew Jones,10 EILEEN ST    WALKERSTON QLD 4751 Australia,Walkerston,Queensland,Australia,73637582775,Nov-24,,Aamir Shaikh,Krupali Joshi
-C-000492,VNC AU,JR Integrated Services Group NSW Pty Ltd,ANZA,Recurring,AUD,Rav ,Sandher,Rav Sandher,"Unit 1 Level 1 123 Browns Plains Road, Browns Plains",Brisbane,Queensland,Australia,,,,Aamir Shaikh,Krupali Joshi
-C-000434,VNC AU,JR Security Services Australia,ANZA,Recurring,AUD,Ramanpreet,S Sandher,Ramanpreet S Sandher,"Level 1, 1/123 Browns Plains Road, Browns Plain 4118 QLD",Brisbane,Queensland,Australia,90618776266,Mar-25,,Aamir Shaikh,Krupali Joshi
+C-000499,VNC AU,Industrial Brushware Pty Ltd ,SCA,one Off,AUD,,,Bill Kikos,"22 Law Court, Sunshine",Melbourne,Victoria,Australia,,Jun-26,29-Jun-26,Aamir Shaikh,0
+C-000330,VNC AU,Janine Morcos,ANZA,Recurring,AUD,Janine,Morcos,,Unit 6 9 Hammond St THORNBURY VIC 3071 AUSTRALIA ABN: 66 747 962 788,,,Australia,66747962788,Jun-24,23-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000453,VNC AU,Jigsaw OOSH Bardia Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO Box 8301,Sydney,New South Wales,Australia,,Apr-26,30-Mar-26,Rupali Parikh,Vinita Sharma
+C-000455,VNC AU,Jigsaw OOSH Dural Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO BOX 8301,Sydney,New South Wales,Australia,,Apr-26,30-Mar-26,Rupali Parikh,Vinita Sharma
+C-000456,VNC AU,Jigsaw OOSH Galungara Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO Box 8301,Sydney,New South Wales,Australia,,Apr-26,30-Mar-26,Rupali Parikh,Vinita Sharma
+C-000457,VNC AU,Jigsaw OOSH Hambledon Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO BOX 8301,Sydney,New South Wales,Australia,,Apr-26,30-Mar-26,Rupali Parikh,Vinita Sharma
+C-000458,VNC AU,Jigsaw OOSH Melrose Park Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,Po Box 8301,Sydney,New South Wales,Australia,,Apr-26,30-Mar-26,Rupali Parikh,Vinita Sharma
+C-000077,VNC AU,Jigsaw OOSH Pty Ltd,EFA,Recurring,AUD,Ronald,Alexander,,"6.02/5 Celebration Dr, Bella Vista     NSW 2153 Australia",Bella Vista,New South Wales,Australia,51160855907,Feb-23,31-Mar-25,Rupali Parikh,Vinita Sharma
+C-000459,VNC AU,Jigsaw OOSH Strathfield South Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO BOX 8301,Sydney,New South Wales,Australia,,Apr-26,30-Mar-26,Rupali Parikh,Vinita Sharma
+C-000460,VNC AU,Jigsaw OOSH Vardys Road Pty Ltd,EFA,Recurring,AUD,Julie ,Karim,Alex Bechara,PO Box 8301,Sydney,New South Wales,Australia,,Apr-26,30-Mar-26,Rupali Parikh,Vinita Sharma
+C-000389,VNC AU,Jones Heavy Mechanical & Electrical Pty Ltd,ANZA,Recurring,AUD,Matthew,Jones,Matthew Jones,10 EILEEN ST    WALKERSTON QLD 4751 Australia,Walkerston,Queensland,Australia,73637582775,Nov-24,28-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000492,VNC AU,JR Integrated Services Group NSW Pty Ltd,ANZA,Recurring,AUD,Rav ,Sandher,Rav Sandher,"Unit 1 Level 1 123 Browns Plains Road, Browns Plains",Brisbane,Queensland,Australia,,,6-Apr-26,Aamir Shaikh,Krupali Joshi
+C-000434,VNC AU,JR Security Services Australia,ANZA,Recurring,AUD,Ramanpreet,S Sandher,Ramanpreet S Sandher,"Level 1, 1/123 Browns Plains Road, Browns Plain 4118 QLD",Brisbane,Queensland,Australia,90618776266,Mar-25,6-Apr-26,Aamir Shaikh,Krupali Joshi
 C-000079,VNC GL,Junkman LLC,EFA,Recurring,USD,,,Lou Pavelchik,719 E Lake Mead Pkwy,Henderson,Nevada,USA,,Feb-20,,Rupali Parikh,Rupali Parikh
-C-000332,VNC AU,Liana LUCCA-POPE,ANZA,Recurring,AUD,,,Liana LUCCA-POPE,80 Paisley St FOOTSCRAY VIC 3011 AUSTRALIA ABN: 22 134 902 286,"FOOTSCRAY,",Victoria,Australia,22134902286,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000468,VNC IN,Locusnine Innovations Private Limited,EFA,Recurring,,,,,,,,INDIA,,,,Rupali Parikh,Rupali Parikh
-C-000490,VNC GL,Lumia Health,SCA,Recurring,USD,,,Paul Jin,"119 Braintree Street, Suite 301",Allston,Massachusetts,USA,,Mar-26,,Aamir Shaikh,Aliakbar Vohra
-C-000491,VNC AU,Lupemua Veamatahau trading as Call a cuzzie,ANZA,Recurring,AUD,Lupe Veamatahau,,Lupe Veamatahau,"11 Aronson Crescent, Gilmore",Canberra,Australian Capital Territory,Australia,27723972854,Apr-26,,Aamir Shaikh,Krupali Joshi
-C-000386,VNC AU,Mayhem Custom Fabrication Pty Ltd,ANZA,Recurring,AUD,Matthew,Howman,Matthew Howman,"Shop 5, 26 Endeavour Street",Mackay,Queensland,Australia,70832735975,Nov-24,,Aamir Shaikh,Krupali Joshi
+C-000332,VNC AU,Liana LUCCA-POPE,ANZA,Recurring,AUD,,,Liana LUCCA-POPE,80 Paisley St FOOTSCRAY VIC 3011 AUSTRALIA ABN: 22 134 902 286,"FOOTSCRAY,",Victoria,Australia,22134902286,Jun-24,20-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000468,VNC IN,Locusnine Innovations Private Limited,EFA,Recurring,,,,,,,,INDIA,,,26-Sep-25,Rupali Parikh,Rupali Parikh
+C-000490,VNC GL,Lumia Health,SCA,Recurring,USD,,,Paul Jin,"119 Braintree Street, Suite 301",Allston,Massachusetts,USA,,Mar-26,13-Mar-26,Aamir Shaikh,Aliakbar Vohra
+C-000491,VNC AU,Lupemua Veamatahau trading as Call a cuzzie,ANZA,Recurring,AUD,Lupe Veamatahau,,Lupe Veamatahau,"11 Aronson Crescent, Gilmore",Canberra,Australian Capital Territory,Australia,27723972854,Apr-26,2-Apr-26,Aamir Shaikh,Krupali Joshi
+C-000386,VNC AU,Mayhem Custom Fabrication Pty Ltd,ANZA,Recurring,AUD,Matthew,Howman,Matthew Howman,"Shop 5, 26 Endeavour Street",Mackay,Queensland,Australia,70832735975,Nov-24,2-Jul-25,Aamir Shaikh,Krupali Joshi
 C-000092,VNC AU,Medigroup ( Australia ) Pty Ltd,SCA,Recurring,AUD,Finance,Team,,"1/530 Little Collins St, Melbourne, VIC 3000, Australia",,,Australia,84116264281,Nov-17,,Aamir Shaikh,Ganesh Rathore
-C-000333,VNC AU,Northward Carpentry Pty Ltd,ANZA,Recurring,AUD,,,,ABN: 71 656 242 661,,,Australia,71656242661,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000104,VNC GL,Nsaaba LLC,SCA,Recurring,USD,,,Nana Quagraine,"137 Montague St,",Brooklyn,New York,USA,,Aug-18,,Aamir Shaikh,Ganesh Rathore
-C-000334,VNC AU,Off Scratch Pty Ltd - Gift Hotel,ANZA,Recurring,AUD,Adrian,Coyne,Adrian Coyne,13 Main St STAWELL VIC 3380 AUSTRALIA ABN: 85 635 226 069,Melbourne,Victoria,Australia,85635226069,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000483,VNC GL,OLA MATE,SCA,Recurring,USD,,,Anthony-John Scordio,229 East Market Street,Long Beach ,New York,USA,,Dec-25,,Aamir Shaikh,Ganesh Rathore
-C-000106,VNC AU,OPMC Australia Pty Ltd,EFA,Recurring,AUD,Chris,Bryant,Chris Bryant,"Suite 3, Level 1/35 Buckingham St, Surry Hills NSW 2010 Australia www.opmc.com.au(02) 9955 2237",Surry Hills,New South Wales,Australia,98608172943,Nov-16,,Rupali Parikh,Vinita Sharma
-C-000351,VNC GL,Out �n' About,SCA,Recurring,GBP,,,Frederik De Coninck-Smith,7 Caxton Rd,Bedford,England,UK,,Feb-25,,Aamir Shaikh,Aliakbar Vohra
-C-000493,VNC GL,Pokoloko,SCA,one Off,AUD,,,Case Bakker,339 Richmond Road,Ottawa,Ontario,CANADA,,May-26,,Aamir Shaikh,Aliakbar Vohra
-C-000320,VNC AU,Power House Retail Distribution Pty Ltd,EFA,Recurring,AUD,Helen,Sykes,Helen Sykes,Attention: 202 / 33 Lexington Drive NORWEST 2153,Norwest,New South Wales,Australia,31677367314,Jul-24,,Rupali Parikh,Vinita Sharma
-C-000423,VNC AU,Print Council of Australia,ANZA,Recurring,AUD,Akky,Van Ogtrop,Jade Kellett,Studio 2 Guild152 Sturt Street Southbank VIC 3006 Australia,Southbank,Victoria,Australia,52199195151,Dec-24,,Aamir Shaikh,Krupali Joshi
-C-000115,VNC GL,"Qwik Kit, LLC",EFA,Recurring,USD,,,Adam Franklin ,"15002 Sommermeyer St,",Houston,Texas,USA,,Mar-17,,Rupali Parikh,Vinita Sharma
+C-000333,VNC AU,Northward Carpentry Pty Ltd,ANZA,Recurring,AUD,,,,ABN: 71 656 242 661,,,Australia,71656242661,Jun-24,1-Jul-25,Aamir Shaikh,Krupali Joshi
+C-000104,VNC GL,Nsaaba LLC,SCA,Recurring,USD,,,Nana Quagraine,"137 Montague St,",Brooklyn,New York,USA,,Aug-18,22-May-25,Aamir Shaikh,Ganesh Rathore
+C-000334,VNC AU,Off Scratch Pty Ltd - Gift Hotel,ANZA,Recurring,AUD,Adrian,Coyne,Adrian Coyne,13 Main St STAWELL VIC 3380 AUSTRALIA ABN: 85 635 226 069,Melbourne,Victoria,Australia,85635226069,Jun-24,23-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000483,VNC GL,OLA MATE,SCA,Recurring,USD,,,Anthony-John Scordio,229 East Market Street,Long Beach ,New York,USA,,Dec-25,5-Dec-25,Aamir Shaikh,Ganesh Rathore
+C-000106,VNC AU,OPMC Australia Pty Ltd,EFA,Recurring,AUD,Chris,Bryant,Chris Bryant,"Suite 3, Level 1/35 Buckingham St, Surry Hills NSW 2010 Australia www.opmc.com.au(02) 9955 2237",Surry Hills,New South Wales,Australia,98608172943,Nov-16,26-Jun-23,Rupali Parikh,Vinita Sharma
+C-000351,VNC GL,Out ‘n' About,SCA,Recurring,GBP,,,Frederik De Coninck-Smith,7 Caxton Rd,Bedford,England,UK,,Feb-25,25-Apr-25,Aamir Shaikh,Aliakbar Vohra
+C-000493,VNC GL,Pokoloko,SCA,one Off,AUD,,,Case Bakker,339 Richmond Road,Ottawa,Ontario,CANADA,,May-26,11-May-26,Aamir Shaikh,Aliakbar Vohra
+C-000320,VNC AU,Power House Retail Distribution Pty Ltd,EFA,Recurring,AUD,Helen,Sykes,Helen Sykes,Attention: 202 / 33 Lexington Drive NORWEST 2153,Norwest,New South Wales,Australia,31677367314,Jul-24,4-Jul-24,Rupali Parikh,Vinita Sharma
+C-000423,VNC AU,Print Council of Australia,ANZA,Recurring,AUD,Akky,Van Ogtrop,Jade Kellett,Studio 2 Guild152 Sturt Street Southbank VIC 3006 Australia,Southbank,Victoria,Australia,52199195151,Dec-24,1-Jul-25,Aamir Shaikh,Krupali Joshi
+C-000115,VNC GL,"Qwik Kit, LLC",EFA,Recurring,USD,,,Adam Franklin ,"15002 Sommermeyer St,",Houston,Texas,USA,,Mar-17,30-Sep-25,Rupali Parikh,Vinita Sharma
 C-000428,VNC AU,RAJI FOODS (AUST) PTY LTD,ANZA,Recurring,,Chris,Bryant,,,,,Australia,88169690760,Sep-25,,Aamir Shaikh,Krupali Joshi
-C-000336,VNC AU,Sabrini Foods Pty Ltd,ANZA,Recurring,AUD,Sabitha,Uvaraja,Sabitha Uvaraja,77 Boundary Road CARRUM DOWNS VICTORIA 3201 AUSTRALIA ABN: 31 083 441 687,Melbourne,Victoria,Australia,31083441687,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000337,VNC AU,Sally Mackinnon,ANZA,Recurring,AUD,Sally,McKinnon,Sally McKinnon,902/35 Spring St MELBOURNE VIC 3000 AU ABN: 14 217 971 174,Melbourne,Victoria,Australia,14217971174,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000127,VNC AU,Seva Business Services,EFA,Recurring,AUD,Tari,,Tari White,Tari White,ChristChurch,,New Zealand,87002560965,Feb-23,,Rupali Parikh,Vinita Sharma
-C-000466,VNC AU,Solis Pacific Recycling Limited,ANZA,Recurring,AUD,Hari ,Agarwal,Hari Agarwal,"20 Koromeke Street, Flat Bush",Auckland,North Island,New Zealand,,Oct-25,,Aamir Shaikh,Krupali Joshi
-C-000438,VNC GL,Squirro AG,SCA,Recurring,USD,,,Oliver Treyer,Squirro AG Muhlebachstrasse 70 CH - 8008,Zurich,Zurich,SWITZERLAND,,Mar-25,,Aamir Shaikh,Vinita Sharma
+C-000336,VNC AU,Sabrini Foods Pty Ltd,ANZA,Recurring,AUD,Sabitha,Uvaraja,Sabitha Uvaraja,77 Boundary Road CARRUM DOWNS VICTORIA 3201 AUSTRALIA ABN: 31 083 441 687,Melbourne,Victoria,Australia,31083441687,Jun-24,23-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000337,VNC AU,Sally Mackinnon,ANZA,Recurring,AUD,Sally,McKinnon,Sally McKinnon,902/35 Spring St MELBOURNE VIC 3000 AU ABN: 14 217 971 174,Melbourne,Victoria,Australia,14217971174,Jun-24,24-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000127,VNC AU,Seva Business Services,EFA,Recurring,AUD,Tari,,Tari White,Tari White,ChristChurch,,New Zealand,87002560965,Feb-23,3-Oct-25,Rupali Parikh,Vinita Sharma
+C-000466,VNC AU,Solis Pacific Recycling Limited,ANZA,Recurring,AUD,Hari ,Agarwal,Hari Agarwal,"20 Koromeke Street, Flat Bush",Auckland,North Island,New Zealand,,Oct-25,29-Sep-25,Aamir Shaikh,Krupali Joshi
+C-000438,VNC GL,Squirro AG,SCA,Recurring,USD,,,Oliver Treyer,Squirro AG Muhlebachstrasse 70 CH - 8008,Zurich,Zurich,SWITZERLAND,,Mar-25,16-Jan-26,Aamir Shaikh,Vinita Sharma
 C-000436,VNC AU,T & T MCNAUGHT ENTERPRISES P/L,EFA,Recurring,AUD,Omar,Elhariry,Tristram Mcnaught,"33 Bentley St, Wetherill Park",Sydney,New South Wales,Australia,,Nov-24,,Rupali Parikh,Vinita Sharma
-C-000340,VNC AU,THE TRUSTEE FOR CHAMBERLAIN FAMILY TRUST,ANZA,Recurring,AUD,Dean,Chamberlain,Dean Chamberlain,28 Central Ave SUNSHINE VIC 3020 AUSTRALIA ABN: 33 284 312 042,Melbourne,Victoria,Australia,33284312042,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000341,VNC AU,The Trustee for Sato Family Trust,ANZA,Recurring,AUD,,,Janelle Sato,1a Dundalk St SUNSHINE VIC 3020 AUSTRALIA ABN: 61 820 954 140,Melbourne,Victoria,Australia,61820954140,Jun-24,,Aamir Shaikh,Krupali Joshi
-C-000152,VNC GL,Tillfield Ltd,SCA,Recurring,GBP,,,Shanil Shah,"Kanchan House, 2 Peall Road, Croydon",Surrey,,UK,,Jul-25,,Aamir Shaikh,Aliakbar Vohra
-C-000478,VNC AU,VIGILANT SECURITY OPERATIONS PTY. LTD,ANZA,Recurring,AUD,Jack, Newton,Jack Newton,"Moss Vale, New South Wales",Moss Vale,New South Wales,Australia,,Nov-25,,Aamir Shaikh,Krupali Joshi
-C-000496,VNC AU,Werko Australia,SCA,one Off,AUD,Cameron, Hochhauser,Cameron Hochhauser,"73 Bazalgette Cr, Dandenong South",Melbourne,Victoria,Australia,,May-26,,Aamir Shaikh,Aamir Shaikh
+C-000340,VNC AU,THE TRUSTEE FOR CHAMBERLAIN FAMILY TRUST,ANZA,Recurring,AUD,Dean,Chamberlain,Dean Chamberlain,28 Central Ave SUNSHINE VIC 3020 AUSTRALIA ABN: 33 284 312 042,Melbourne,Victoria,Australia,33284312042,Jun-24,26-Jun-25,Aamir Shaikh,Krupali Joshi
+C-000341,VNC AU,The Trustee for Sato Family Trust,ANZA,Recurring,AUD,,,Janelle Sato,1a Dundalk St SUNSHINE VIC 3020 AUSTRALIA ABN: 61 820 954 140,Melbourne,Victoria,Australia,61820954140,Jun-24,9-Jul-25,Aamir Shaikh,Krupali Joshi
+C-000152,VNC GL,Tillfield Ltd,SCA,Recurring,GBP,,,Shanil Shah,"Kanchan House, 2 Peall Road, Croydon",Surrey,,UK,,Jul-25,18-Jul-25,Aamir Shaikh,Aliakbar Vohra
+C-000478,VNC AU,VIGILANT SECURITY OPERATIONS PTY. LTD,ANZA,Recurring,AUD,Jack, Newton,Jack Newton,"Moss Vale, New South Wales",Moss Vale,New South Wales,Australia,,Nov-25,13-Nov-25,Aamir Shaikh,Krupali Joshi
+C-000496,VNC AU,Werko Australia,SCA,one Off,AUD,Cameron, Hochhauser,Cameron Hochhauser,"73 Bazalgette Cr, Dandenong South",Melbourne,Victoria,Australia,,May-26,21-May-26,Aamir Shaikh,Aamir Shaikh
 C-000479,VNC GL,WESTERN MIXER LLC,SCA,Recurring,USD,,,,,,,,,Nov-25,,Aamir Shaikh,Ganesh Rathore
-C-000166,VNC GL,Wisdom Analytics,EFA,Recurring,USD,,,Bart Flaherty,"01 Brush Hill Rd, Suite 335",New Fairfield,Connecticut,USA,,Nov-24,,Rupali Parikh,Rupali Parikh
+C-000166,VNC GL,Wisdom Analytics,EFA,Recurring,USD,,,Bart Flaherty,"01 Brush Hill Rd, Suite 335",New Fairfield,Connecticut,USA,,Nov-24,18-Feb-26,Rupali Parikh,Rupali Parikh

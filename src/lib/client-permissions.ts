@@ -196,6 +196,27 @@ export function isClientSuperUser(user: Person | null): boolean {
 }
 
 /**
+ * CLIENT DELETE / RESTORE
+ * Soft-delete only (sets deletedAt/deletedBy — see Client History page).
+ * Scope: CEO / Managing Director / Admin (organisation-wide), or a
+ * Business Unit Head for their matching BU. Team Lead is deliberately
+ * excluded here — deletion is more consequential than the other
+ * Team-Lead-permitted actions, and there's no real Permission Management
+ * module to defer this decision to, so defaulting to the narrower scope
+ * rather than guessing wider. Easy to add Team Lead here later if wanted.
+ */
+export function canDeleteClient(user: Person | null, client?: ClientRecord | null): boolean {
+  if (!user) return false;
+  if (isClientSuperUser(user)) return true;
+  const role = getClientRole(user);
+  if (role === "Business Unit Head") {
+    if (!client) return true;
+    return isUserInClientBU(user, client);
+  }
+  return false;
+}
+
+/**
  * TEAM OWNERSHIP
  * Only the Business Unit Head (for their matching BU) can assign or replace the Team Lead.
  * No other role (including CEO, MD, Admin) can assign Team Lead.

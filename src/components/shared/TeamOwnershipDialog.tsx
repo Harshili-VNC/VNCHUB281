@@ -57,6 +57,7 @@ function EmployeeSelect({
   allowNa,
   placeholder,
   disabled,
+  roleFilter,
 }: {
   people: Person[];
   value: string;
@@ -64,7 +65,37 @@ function EmployeeSelect({
   allowNa?: boolean;
   placeholder: string;
   disabled?: boolean;
+  roleFilter?: "bum" | "tl" | "atl" | "fa"; // CHANGE 9: added "fa"
 }) {
+  const filteredPeople = people.filter((p) => {
+    if (p.status !== "active") return false;
+    if (p.id === value) return true; // always preserve currently selected user
+    if (!roleFilter) return true;
+    if (roleFilter === "bum") {
+      return (
+        p.designation === "Business Unit Head" ||
+        Boolean(p.isBusinessUnitHead) ||
+        p.designation === "CEO" ||
+        p.designation === "Managing Director"
+      );
+    }
+    if (roleFilter === "tl") {
+      return p.designation === "Team Lead" || Boolean(p.isTeamLead) || p.designation === "Business Unit Head";
+    }
+    if (roleFilter === "atl") {
+      return p.designation === "Assistant Team Lead" || p.designation === "Team Lead";
+    }
+    // CHANGE 9: Finance Analyst role filter — show only Finance Analyst designations
+    if (roleFilter === "fa") {
+      return (
+        p.designation === "Finance Analyst" ||
+        p.designation === "Senior Finance Analyst" ||
+        p.designation === "Junior Finance Analyst"
+      );
+    }
+    return true;
+  });
+
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger className={disabled ? "bg-surface-2 opacity-80 cursor-not-allowed" : ""}>
@@ -72,13 +103,11 @@ function EmployeeSelect({
       </SelectTrigger>
       <SelectContent>
         {allowNa && <SelectItem value={NA}>NA</SelectItem>}
-        {people
-          .filter((p) => p.status === "active")
-          .map((p) => (
-            <SelectItem key={p.id} value={p.id}>
-              {employeeLabel(p)}
-            </SelectItem>
-          ))}
+        {filteredPeople.map((p) => (
+          <SelectItem key={p.id} value={p.id}>
+            {employeeLabel(p)}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
@@ -220,6 +249,7 @@ export function TeamOwnershipDialog({
                 value={form.teamLeadId}
                 onChange={(v) => set("teamLeadId", v)}
                 placeholder="Select mandatory Team Lead"
+                roleFilter="tl"
               />
             </div>
             <div className="col-span-2">
@@ -230,6 +260,7 @@ export function TeamOwnershipDialog({
                 onChange={(v) => set("backupTeamLeadId", v)}
                 allowNa
                 placeholder="NA"
+                roleFilter="tl"
               />
             </div>
           </div>
@@ -244,6 +275,7 @@ export function TeamOwnershipDialog({
                 onChange={(v) => set("teamLeadId", v)}
                 placeholder="Select employee"
                 disabled={isAssignedTL && !isSuper}
+                roleFilter="tl"
               />
             </div>
             <div>
@@ -254,6 +286,7 @@ export function TeamOwnershipDialog({
                 onChange={(v) => set("backupTeamLeadId", v)}
                 allowNa
                 placeholder="NA"
+                roleFilter="tl"
               />
             </div>
             <div>
@@ -264,6 +297,7 @@ export function TeamOwnershipDialog({
                 onChange={(v) => set("businessUnitManagerId", v)}
                 allowNa
                 placeholder="Select employee"
+                roleFilter="bum"
               />
             </div>
             <div>
@@ -274,6 +308,7 @@ export function TeamOwnershipDialog({
                 onChange={(v) => set("backupBusinessUnitManagerId", v)}
                 allowNa
                 placeholder="NA"
+                roleFilter="bum"
               />
             </div>
             <div>
@@ -284,6 +319,7 @@ export function TeamOwnershipDialog({
                 onChange={(v) => set("assistantTeamLeadId", v)}
                 allowNa
                 placeholder="NA"
+                roleFilter="atl"
               />
             </div>
             <div>
@@ -294,6 +330,7 @@ export function TeamOwnershipDialog({
                 onChange={(v) => set("backupAssistantTeamLeadId", v)}
                 allowNa
                 placeholder="NA"
+                roleFilter="atl"
               />
             </div>
             <div className="col-span-2">
@@ -318,12 +355,14 @@ export function TeamOwnershipDialog({
               <Fragment key={n}>
                 <div>
                   <Label>Finance Analyst {n}</Label>
+                  {/* CHANGE 9: roleFilter="fa" restricts to Finance Analyst designations */}
                   <EmployeeSelect
                     people={people}
                     value={form[`financeAnalyst${n}Id` as const]}
                     onChange={(v) => set(`financeAnalyst${n}Id` as const, v)}
                     allowNa
                     placeholder="NA"
+                    roleFilter="fa"
                   />
                 </div>
                 <div>
@@ -334,6 +373,7 @@ export function TeamOwnershipDialog({
                     onChange={(v) => set(`backupFinanceAnalyst${n}Id` as const, v)}
                     allowNa
                     placeholder="NA"
+                    roleFilter="fa"
                   />
                 </div>
               </Fragment>

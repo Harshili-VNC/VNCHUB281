@@ -128,6 +128,8 @@ export type ClientRecord = {
   approvedBy: string | null;
   approvedAt: string | null;
   rejectionCorrectionNotes: string | null;
+  deletedAt: string | null;
+  deletedBy: string | null;
   // Section 9: Team Ownership Structure
   businessUnitManagerId: string | null;
   teamLeadId: string | null;
@@ -606,6 +608,17 @@ export const softwareCategories = [
       "Other",
       "NA",
     ],
+  },
+  // CHANGE 8: Additional software categories added
+  {
+    name: "Practice Management",
+    multiSelect: false,
+    options: ["Karbon", "XPM (Xero Practice Manager)", "Jetpack Workflow", "Financial Cents", "Other", "NA"],
+  },
+  {
+    name: "Document Management",
+    multiSelect: false,
+    options: ["Google Drive", "SharePoint", "Dropbox", "OneDrive", "DocuSign", "Other", "NA"],
   },
 ];
 

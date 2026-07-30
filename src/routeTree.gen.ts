@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AiAgentsRouteImport } from './routes/ai-agents'
 import { Route as ClientApprovalsRouteImport } from './routes/client-approvals'
 import { Route as ClientChangeRequestsRouteImport } from './routes/client-change-requests'
+import { Route as ClientHistoryRouteImport } from './routes/client-history'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as EmployeeHistoryRouteImport } from './routes/employee-history'
@@ -23,6 +24,7 @@ import { Route as KnowledgeRouteImport } from './routes/knowledge'
 import { Route as LearningRouteImport } from './routes/learning'
 import { Route as LeaveRouteImport } from './routes/leave'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PendingRenewalRouteImport } from './routes/pending-renewal'
 import { Route as PerformanceRouteImport } from './routes/performance'
 import { Route as RecruitmentRouteImport } from './routes/recruitment'
 import { Route as ReportsRouteImport } from './routes/reports'
@@ -49,6 +51,11 @@ const ClientApprovalsRoute = ClientApprovalsRouteImport.update({
 const ClientChangeRequestsRoute = ClientChangeRequestsRouteImport.update({
   id: '/client-change-requests',
   path: '/client-change-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientHistoryRoute = ClientHistoryRouteImport.update({
+  id: '/client-history',
+  path: '/client-history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsRoute = ClientsRouteImport.update({
@@ -101,6 +108,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PendingRenewalRoute = PendingRenewalRouteImport.update({
+  id: '/pending-renewal',
+  path: '/pending-renewal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PerformanceRoute = PerformanceRouteImport.update({
   id: '/performance',
   path: '/performance',
@@ -142,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/ai-agents': typeof AiAgentsRoute
   '/client-approvals': typeof ClientApprovalsRoute
   '/client-change-requests': typeof ClientChangeRequestsRoute
+  '/client-history': typeof ClientHistoryRoute
   '/clients': typeof ClientsRoute
   '/documents': typeof DocumentsRoute
   '/employee-history': typeof EmployeeHistoryRoute
@@ -152,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/learning': typeof LearningRoute
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
+  '/pending-renewal': typeof PendingRenewalRoute
   '/performance': typeof PerformanceRoute
   '/recruitment': typeof RecruitmentRoute
   '/reports': typeof ReportsRoute
@@ -165,6 +179,7 @@ export interface FileRoutesByTo {
   '/ai-agents': typeof AiAgentsRoute
   '/client-approvals': typeof ClientApprovalsRoute
   '/client-change-requests': typeof ClientChangeRequestsRoute
+  '/client-history': typeof ClientHistoryRoute
   '/clients': typeof ClientsRoute
   '/documents': typeof DocumentsRoute
   '/employee-history': typeof EmployeeHistoryRoute
@@ -175,6 +190,7 @@ export interface FileRoutesByTo {
   '/learning': typeof LearningRoute
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
+  '/pending-renewal': typeof PendingRenewalRoute
   '/performance': typeof PerformanceRoute
   '/recruitment': typeof RecruitmentRoute
   '/reports': typeof ReportsRoute
@@ -189,6 +205,7 @@ export interface FileRoutesById {
   '/ai-agents': typeof AiAgentsRoute
   '/client-approvals': typeof ClientApprovalsRoute
   '/client-change-requests': typeof ClientChangeRequestsRoute
+  '/client-history': typeof ClientHistoryRoute
   '/clients': typeof ClientsRoute
   '/documents': typeof DocumentsRoute
   '/employee-history': typeof EmployeeHistoryRoute
@@ -199,6 +216,7 @@ export interface FileRoutesById {
   '/learning': typeof LearningRoute
   '/leave': typeof LeaveRoute
   '/login': typeof LoginRoute
+  '/pending-renewal': typeof PendingRenewalRoute
   '/performance': typeof PerformanceRoute
   '/recruitment': typeof RecruitmentRoute
   '/reports': typeof ReportsRoute
@@ -214,6 +232,7 @@ export interface FileRouteTypes {
     | '/ai-agents'
     | '/client-approvals'
     | '/client-change-requests'
+    | '/client-history'
     | '/clients'
     | '/documents'
     | '/employee-history'
@@ -224,6 +243,7 @@ export interface FileRouteTypes {
     | '/learning'
     | '/leave'
     | '/login'
+    | '/pending-renewal'
     | '/performance'
     | '/recruitment'
     | '/reports'
@@ -237,6 +257,7 @@ export interface FileRouteTypes {
     | '/ai-agents'
     | '/client-approvals'
     | '/client-change-requests'
+    | '/client-history'
     | '/clients'
     | '/documents'
     | '/employee-history'
@@ -247,6 +268,7 @@ export interface FileRouteTypes {
     | '/learning'
     | '/leave'
     | '/login'
+    | '/pending-renewal'
     | '/performance'
     | '/recruitment'
     | '/reports'
@@ -260,6 +282,7 @@ export interface FileRouteTypes {
     | '/ai-agents'
     | '/client-approvals'
     | '/client-change-requests'
+    | '/client-history'
     | '/clients'
     | '/documents'
     | '/employee-history'
@@ -270,6 +293,7 @@ export interface FileRouteTypes {
     | '/learning'
     | '/leave'
     | '/login'
+    | '/pending-renewal'
     | '/performance'
     | '/recruitment'
     | '/reports'
@@ -284,6 +308,7 @@ export interface RootRouteChildren {
   AiAgentsRoute: typeof AiAgentsRoute
   ClientApprovalsRoute: typeof ClientApprovalsRoute
   ClientChangeRequestsRoute: typeof ClientChangeRequestsRoute
+  ClientHistoryRoute: typeof ClientHistoryRoute
   ClientsRoute: typeof ClientsRoute
   DocumentsRoute: typeof DocumentsRoute
   EmployeeHistoryRoute: typeof EmployeeHistoryRoute
@@ -294,6 +319,7 @@ export interface RootRouteChildren {
   LearningRoute: typeof LearningRoute
   LeaveRoute: typeof LeaveRoute
   LoginRoute: typeof LoginRoute
+  PendingRenewalRoute: typeof PendingRenewalRoute
   PerformanceRoute: typeof PerformanceRoute
   RecruitmentRoute: typeof RecruitmentRoute
   ReportsRoute: typeof ReportsRoute
@@ -331,6 +357,13 @@ declare module '@tanstack/react-router' {
       path: '/client-change-requests'
       fullPath: '/client-change-requests'
       preLoaderRoute: typeof ClientChangeRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/client-history': {
+      id: '/client-history'
+      path: '/client-history'
+      fullPath: '/client-history'
+      preLoaderRoute: typeof ClientHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients': {
@@ -403,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pending-renewal': {
+      id: '/pending-renewal'
+      path: '/pending-renewal'
+      fullPath: '/pending-renewal'
+      preLoaderRoute: typeof PendingRenewalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/performance': {
       id: '/performance'
       path: '/performance'
@@ -460,6 +500,7 @@ const rootRouteChildren: RootRouteChildren = {
   AiAgentsRoute: AiAgentsRoute,
   ClientApprovalsRoute: ClientApprovalsRoute,
   ClientChangeRequestsRoute: ClientChangeRequestsRoute,
+  ClientHistoryRoute: ClientHistoryRoute,
   ClientsRoute: ClientsRoute,
   DocumentsRoute: DocumentsRoute,
   EmployeeHistoryRoute: EmployeeHistoryRoute,
@@ -470,6 +511,7 @@ const rootRouteChildren: RootRouteChildren = {
   LearningRoute: LearningRoute,
   LeaveRoute: LeaveRoute,
   LoginRoute: LoginRoute,
+  PendingRenewalRoute: PendingRenewalRoute,
   PerformanceRoute: PerformanceRoute,
   RecruitmentRoute: RecruitmentRoute,
   ReportsRoute: ReportsRoute,

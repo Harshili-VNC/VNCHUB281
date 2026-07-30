@@ -9,6 +9,8 @@ import { uploadDocumentFn, deleteDocumentFn } from "../api/documents.mutations";
 import {
   addClientFn,
   updateClientFn,
+  deleteClientFn,
+  restoreClientFn,
   submitClientForReviewFn,
   decideClientApprovalFn,
   addClientChangeRequestFn,
@@ -275,6 +277,8 @@ type WorkspaceContextValue = {
   deleteDocument: (id: string) => Promise<Result>;
   addClient: (input: ClientInput) => Promise<Result & { id?: string; code?: string }>;
   updateClient: (id: string, input: ClientInput) => Promise<Result>;
+  deleteClient: (id: string) => Promise<Result>;
+  restoreClient: (id: string) => Promise<Result>;
   submitClientForReview: (id: string) => Promise<Result>;
   decideClientApproval: (
     id: string,
@@ -421,6 +425,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return runAction("Saving the client record", () => updateClientFn({ data: { id, ...input } }));
   }
 
+  async function deleteClient(id: string): Promise<Result> {
+    return runAction("Deleting the client record", () => deleteClientFn({ data: { id } }));
+  }
+
+  async function restoreClient(id: string): Promise<Result> {
+    return runAction("Restoring the client record", () => restoreClientFn({ data: { id } }));
+  }
+
   async function submitClientForReview(id: string): Promise<Result> {
     return runAction("Submitting the client for review", () =>
       submitClientForReviewFn({ data: { id } }),
@@ -538,6 +550,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     deleteDocument,
     addClient,
     updateClient,
+    deleteClient,
+    restoreClient,
     submitClientForReview,
     decideClientApproval,
     addClientChangeRequest,

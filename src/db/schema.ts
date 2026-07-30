@@ -529,6 +529,12 @@ export const clients = pgTable("clients", {
   approvedBy: text("approved_by"),
   approvedAt: date("approved_at", { mode: "string" }),
   rejectionCorrectionNotes: text("rejection_correction_notes"),
+  // Soft-delete — explicitly requested and confirmed as a real schema
+  // addition (as opposed to overloading the existing "Non Active" status).
+  // Both nullable; a client is considered deleted only when deletedAt is
+  // set. Nothing existing reads/writes these unless explicitly checked.
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  deletedBy: text("deleted_by"),
   // --- Section 9: Team Ownership Structure ---
   businessUnitManagerId: text("business_unit_manager_id"),
   teamLeadId: text("team_lead_id"),

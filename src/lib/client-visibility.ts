@@ -18,9 +18,14 @@ import {
   canSendBackClient as _canSendBackClient,
   canOpenClient360 as _canOpenClient360,
   isClientSuperUser as _isClientSuperUser,
+  canDeleteClient as _canDeleteClient,
 } from "./client-permissions";
 
 export { isUserInClientBU, getClientRole };
+
+export function canDeleteClient(user: Person | null, client?: ClientRecord | null): boolean {
+  return _canDeleteClient(user, client ?? null);
+}
 
 export function isSuperUser(user: Person | null): boolean {
   return _isClientSuperUser(user);

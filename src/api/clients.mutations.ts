@@ -28,6 +28,7 @@ import {
   canApproveChangeRequest,
   canManageTeam,
   canAssignTeamLead,
+  canDeleteClient,
   canViewClient,
   isUserInClientBU,
   getClientRole,
@@ -1098,6 +1099,61 @@ export const updateClientFn = createServerFn({ method: "POST" })
         user.name,
       );
     }
+
+    return { ok: true as const };
+  });
+
+/**
+ * CLIENT DELETE / RESTORE (soft-delete)
+ * Deliberately separate from updateClientFn — that mutation is gated by
+ * canEditCompanyInfo (Finance/Marketing Head, own drafts only), which is
+ * the wrong permission scope for delete (meant for CEO/MD/Admin/BU Head,
+ * and should work regardless of the record's current approval status).
+ * Reusing updateClientFn here would have been a real security bug, not
+ * just a convenience shortcut.
+ */
+export const deleteClientFn = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const user = await requireCurrentUser();
+    if (!user) return { ok: false as const, error: "You must be signed in." };
+
+    const target = await findClientById(data.id);
+    if (!target) return { ok: false as const, error: "Client not found." };
+    if (target.deletedAt) return { ok: false as const, error: "Client is already deleted." };
+    if (!canDeleteClient(user, target)) {
+      return { ok: false as const, error: "You are not authorized to delete this client record." };
+    }
+
+    await db
+      .update(clients)
+      .set({ deletedAt: new Date(), deletedBy: user.name, updatedAt: new Date() })
+      .where(eq(clients.id, data.id));
+
+    await logClientHistory(data.id, "Deleted", target.status, "Deleted", null, user.name);
+
+    return { ok: true as const };
+  });
+
+export const restoreClientFn = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const user = await requireCurrentUser();
+    if (!user) return { ok: false as const, error: "You must be signed in." };
+
+    const target = await findClientById(data.id);
+    if (!target) return { ok: false as const, error: "Client not found." };
+    if (!target.deletedAt) return { ok: false as const, error: "Client is not deleted." };
+    if (!canDeleteClient(user, target)) {
+      return { ok: false as const, error: "You are not authorized to restore this client record." };
+    }
+
+    await db
+      .update(clients)
+      .set({ deletedAt: null, deletedBy: null, updatedAt: new Date() })
+      .where(eq(clients.id, data.id));
+
+    await logClientHistory(data.id, "Restored", "Deleted", target.status, null, user.name);
 
     return { ok: true as const };
   });

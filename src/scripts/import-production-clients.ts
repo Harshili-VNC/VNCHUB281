@@ -396,7 +396,7 @@ async function run() {
         businessUnitManagerId: item.managerId,
         teamLeadId: item.teamLeadId,
         status: "Active",
-        recordStatus: "Under Review", // Enters Client Approval Queue for BU Head review
+        recordStatus: "Approved", // Approved & immediately visible on Client Master list
         createdBy: importedBy,
       });
 
