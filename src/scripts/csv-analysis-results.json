@@ -1,0 +1,114 @@
+{
+  "totalRows": 75,
+  "headers": [
+    "Customer Code",
+    "Billing Entity",
+    "Client Name",
+    "Division",
+    "Invoicing Type",
+    "Billing Currency",
+    "FirstName",
+    "LastName",
+    "Contact Name",
+    "Address",
+    "City",
+    "state",
+    "Country",
+    "Tax Number",
+    "Billing Start Date",
+    "Contract Date",
+    "Manager",
+    "Team Lead"
+  ],
+  "columnMapping": {
+    "clientNameColumn": "Client Name",
+    "customerCodeColumn": "Customer Code",
+    "contactPersonNameColumn": "Contact Name"
+  },
+  "countsAndEmptyCheck": {
+    "totalRows": 75,
+    "emptyCustomerCodeCount": 0,
+    "emptyCompanyNameCount": 0,
+    "emptyBillingEntityCount": 0,
+    "emptyDivisionCount": 0,
+    "emptyCurrencyCount": 2
+  },
+  "duplicates": {
+    "duplicateCodesCount": 1,
+    "duplicateCodesList": [
+      "C-000374 (2 occurrences)"
+    ],
+    "duplicateCompaniesCount": 1,
+    "duplicateCompaniesList": [
+      "first connections early learning pty ltd (2 occurrences)"
+    ],
+    "duplicateBillingEntitiesCount": 2,
+    "duplicateTaxNumbersCount": 0
+  },
+  "dateFormats": [
+    "MMM-YY (e.g. Jan-26, Jun-26)"
+  ],
+  "distinctCurrencies": [
+    "AUD",
+    "USD",
+    "GBP"
+  ],
+  "distinctDivisions": [
+    "ANZA",
+    "EFA",
+    "SCA",
+    "MBS"
+  ],
+  "distinctStaffNames": [
+    {
+      "name": "Aamir Shaikh",
+      "matchCount": 1,
+      "status": "EXACT MATCH (1 person found)"
+    },
+    {
+      "name": "Rupali Parikh",
+      "matchCount": 1,
+      "status": "EXACT MATCH (1 person found)"
+    },
+    {
+      "name": "Jimmy Vadera",
+      "matchCount": 1,
+      "status": "EXACT MATCH (1 person found)"
+    },
+    {
+      "name": "Krupali Joshi",
+      "matchCount": 1,
+      "status": "EXACT MATCH (1 person found)"
+    },
+    {
+      "name": "Vinita Sharma",
+      "matchCount": 1,
+      "status": "EXACT MATCH (1 person found)"
+    },
+    {
+      "name": "Aliakbar Vohra",
+      "matchCount": 1,
+      "status": "EXACT MATCH (1 person found)"
+    },
+    {
+      "name": "Ganesh Rathore",
+      "matchCount": 1,
+      "status": "EXACT MATCH (1 person found)"
+    },
+    {
+      "name": "Ravina Kahar",
+      "matchCount": 1,
+      "status": "EXACT MATCH (1 person found)"
+    },
+    {
+      "name": "Vruddhi Parvatia",
+      "matchCount": 1,
+      "status": "EXACT MATCH (1 person found)"
+    },
+    {
+      "name": "0",
+      "matchCount": 0,
+      "status": "UNMATCHED (will set to NULL)"
+    }
+  ]
+}
