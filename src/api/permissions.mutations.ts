@@ -10,12 +10,10 @@ async function requireCurrentUser() {
   return person && person.status === "active" ? person : null;
 }
 
-function isAuthorizedToManagePermissions(user: { departmentFunction?: string; designationId?: string | null }) {
-  return (
-    user.departmentFunction === "Leadership" ||
-    user.departmentFunction === "Admin" ||
-    user.departmentFunction === "IT / Systems"
-  );
+function isAuthorizedToManagePermissions(user: { designation?: string | null; departmentFunction?: string | null }) {
+  const desig = (user.designation || "").toLowerCase();
+  const deptFunc = (user.departmentFunction || "").toLowerCase();
+  return desig.includes("admin") || deptFunc === "admin";
 }
 
 const permissionChangeSchema = z.object({

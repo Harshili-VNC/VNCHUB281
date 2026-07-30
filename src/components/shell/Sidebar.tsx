@@ -129,7 +129,6 @@ const FULL_ACCESS = [
   "/performance",
   "/reports",
   "/documents",
-  "/permission-management",
 ];
 
 const BASE_ACCESS = ["/", "/tasks", "/leave", "/learning", "/performance", "/documents"];
@@ -137,12 +136,18 @@ const BASE_ACCESS = ["/", "/tasks", "/leave", "/learning", "/performance", "/doc
 /**
  * Enterprise permission-driven navigation resolution.
  * Evaluates route visibility dynamically against resolved effective user permissions map.
+ * STRICT REQUIREMENT: Permission Management is restricted ONLY to Admin designation.
  */
 function accessiblePages(
-  person: { departmentFunction: string; isTeamLead: boolean; isBusinessUnitHead: boolean } | null,
+  person: { designation?: string | null; departmentFunction?: string | null; isTeamLead?: boolean; isBusinessUnitHead?: boolean } | null,
   userPermissions: Record<string, boolean>,
 ): string[] {
   const pages = new Set<string>();
+  const isAdmin = Boolean(
+    person &&
+      ((person.designation || "").toLowerCase().includes("admin") ||
+        person.departmentFunction === "Admin")
+  );
 
   // Evaluate via effective permission map when hydrated
   if (userPermissions && Object.keys(userPermissions).length > 0) {
@@ -200,7 +205,8 @@ function accessiblePages(
       pages.add("/documents");
     }
 
-    if (hasPermission(userPermissions, "system.manage_permissions")) {
+    // STRICT: Permission Management visible ONLY to Admin designation
+    if (isAdmin && hasPermission(userPermissions, "system.manage_permissions")) {
       pages.add("/permission-management");
     }
 
@@ -209,11 +215,11 @@ function accessiblePages(
 
   // Fallback initial hydration
   if (person) {
+    if (isAdmin) {
+      return [...FULL_ACCESS.filter((p) => !p.includes("client") && !p.includes("import") && !p.includes("export")), "/permission-management"];
+    }
     if (person.departmentFunction === "Leadership") return FULL_ACCESS;
     if (person.isBusinessUnitHead) return FULL_ACCESS;
-    if (person.departmentFunction === "Admin") {
-      return FULL_ACCESS.filter((p) => !p.includes("client") && !p.includes("import") && !p.includes("export"));
-    }
     return [...BASE_ACCESS];
   }
 

@@ -69,6 +69,13 @@ type AuditLog = {
 function PermissionManagementPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  const isAdmin = Boolean(
+    user &&
+      ((user.designation || "").toLowerCase().includes("admin") ||
+        user.departmentFunction === "Admin")
+  );
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"matrix" | "audit">("matrix");
@@ -94,6 +101,7 @@ function PermissionManagementPage() {
 
   // Load Matrix Data
   async function loadData() {
+    if (!isAdmin) return;
     setLoading(true);
     try {
       const res = await getPermissionMatrixFn();
@@ -110,6 +118,7 @@ function PermissionManagementPage() {
 
   // Load Audit Logs
   async function loadLogs() {
+    if (!isAdmin) return;
     try {
       const res = await getPermissionAuditLogsFn();
       setAuditLogs(res.logs || []);
@@ -119,14 +128,29 @@ function PermissionManagementPage() {
   }
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (isAdmin) {
+      loadData();
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
-    if (activeTab === "audit") {
+    if (isAdmin && activeTab === "audit") {
       loadLogs();
     }
-  }, [activeTab]);
+  }, [isAdmin, activeTab]);
+
+  if (!isAdmin) {
+    return (
+      <AppShell>
+        <div className="p-12 text-center">
+          <h2 className="text-xl font-bold text-destructive">403 — Access Denied</h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            Permission Management is accessible only to system Administrators.
+          </p>
+        </div>
+      </AppShell>
+    );
+  }
 
   // Compute pending unsaved changes
   const pendingChanges = useMemo(() => {
